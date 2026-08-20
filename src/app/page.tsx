@@ -1,69 +1,96 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Input,
+  Modal,
+  Select,
+  Stepper,
+} from "@/components/ui";
 
 export default function Home() {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-16">
+      <header className="flex flex-col gap-2">
+        <span className="text-sm font-medium text-primary">
+          Shree Guru Astro Services
+        </span>
+        <h1 className="text-3xl font-semibold text-foreground">
+          UI component preview
+        </h1>
+        <p className="text-sm text-foreground-muted">
+          Base theme + component set for the booking platform.
+        </p>
+      </header>
+
+      <section className="flex flex-wrap items-center gap-3">
+        <Button variant="primary">Book Now</Button>
+        <Button variant="secondary">Secondary</Button>
+        <Button variant="ghost">Ghost</Button>
+        <Button variant="danger">Cancel</Button>
+        <Badge variant="primary">Online</Badge>
+        <Badge variant="success">Confirmed</Badge>
+        <Badge variant="warning">Pending</Badge>
+        <Badge variant="danger">Cancelled</Badge>
+      </section>
+
+      <Card className="max-w-sm">
+        <CardHeader>
+          <CardTitle>Pandit Ramesh Sharma</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <p className="text-sm text-foreground-muted">
+            Vedic Astrology · Tamil, English · 12 yrs experience
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+          <div className="flex gap-3">
+            <Input label="Date of Birth" type="date" />
+            <Select
+              label="Concern"
+              placeholder="Select a concern"
+              options={[
+                { label: "Marriage", value: "marriage" },
+                { label: "Career", value: "career" },
+                { label: "Health", value: "health" },
+              ]}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" onClick={() => setModalOpen(true)}>
+            Book a Slot
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <Stepper
+        steps={["Service", "Astrologer", "Intake", "Slot", "Confirm"]}
+        currentStep={3}
+      />
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Confirm Booking"
+      >
+        <p className="text-sm text-foreground-muted">
+          This is a placeholder for the booking confirmation flow.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => setModalOpen(false)}>Confirm</Button>
         </div>
-      </main>
-    </div>
+      </Modal>
+    </main>
   );
 }
