@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { Badge, Button } from "@/components/ui";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 export async function Header() {
   const session = await auth();
@@ -58,6 +59,7 @@ export async function Header() {
                 Admin
               </Link>
             )}
+            <NotificationBell />
             <span className="text-sm text-foreground-muted">
               {session.user.name}
             </span>

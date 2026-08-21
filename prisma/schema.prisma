@@ -201,6 +201,10 @@ model Booking {
   completedAt       DateTime?
   cancelledAt       DateTime?
 
+  reminder1hrSentAt     DateTime?
+  reminder10minSentAt   DateTime?
+  sessionStartingSentAt DateTime?
+
   intakeSubmission IntakeSubmission?
   chatMessages     ChatMessage[]
   paymentLink      PaymentLink?
