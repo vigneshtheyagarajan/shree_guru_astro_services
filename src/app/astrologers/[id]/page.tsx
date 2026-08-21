@@ -1,7 +1,17 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Avatar, Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  StarRating,
+} from "@/components/ui";
+import { formatDateShort } from "@/lib/dateFormat";
 
 const MODE_LABELS: Record<string, string> = {
   IN_PERSON: "In-person",
@@ -27,6 +37,12 @@ export default async function AstrologerProfilePage({
   if (!profile || profile.approvalStatus !== "APPROVED") {
     notFound();
   }
+
+  const reviews = await prisma.review.findMany({
+    where: { astrologerId: profile.id },
+    include: { booking: { include: { client: true } } },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
@@ -84,6 +100,34 @@ export default async function AstrologerProfilePage({
                       Book Now
                     </Button>
                   </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">Reviews</h2>
+        {reviews.length === 0 ? (
+          <p className="text-sm text-foreground-muted">No reviews yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {reviews.map((review) => (
+              <Card key={review.id}>
+                <CardContent className="flex flex-col gap-1.5 pt-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">
+                      {review.booking.client.name}
+                    </span>
+                    <span className="text-xs text-foreground-muted">
+                      {formatDateShort(review.createdAt)}
+                    </span>
+                  </div>
+                  <StarRating value={review.rating} readOnly />
+                  {review.comment && (
+                    <p className="text-sm text-foreground-muted">{review.comment}</p>
+                  )}
                 </CardContent>
               </Card>
             ))}

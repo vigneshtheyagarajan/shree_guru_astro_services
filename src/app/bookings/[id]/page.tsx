@@ -1,9 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { Badge, Card, CardContent, CardHeader, CardTitle, StarRating } from "@/components/ui";
 import { ChatPanel } from "@/components/booking/ChatPanel";
 import { BookingStatusActions } from "@/components/booking/BookingStatusActions";
+import { ReviewForm } from "@/components/booking/ReviewForm";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { formatDateTimeLong } from "@/lib/dateFormat";
 
@@ -33,6 +34,7 @@ export default async function BookingDetailPage({
       slot: true,
       intakeSubmission: true,
       paymentLink: true,
+      review: true,
     },
   });
 
@@ -125,6 +127,20 @@ export default async function BookingDetailPage({
           {(booking.status === "PAID" || booking.status === "RATED") && (
             <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-foreground">
               Payment received. Thank you!
+            </div>
+          )}
+
+          {isClientViewer && booking.status === "PAID" && !booking.review && (
+            <ReviewForm bookingId={booking.id} />
+          )}
+
+          {booking.review && (
+            <div className="flex flex-col gap-1 rounded-lg border border-border bg-background-elevated p-3">
+              <p className="text-sm font-medium text-foreground">Your review</p>
+              <StarRating value={booking.review.rating} readOnly />
+              {booking.review.comment && (
+                <p className="text-sm text-foreground-muted">{booking.review.comment}</p>
+              )}
             </div>
           )}
         </CardContent>

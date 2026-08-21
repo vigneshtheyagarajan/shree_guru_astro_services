@@ -52,12 +52,32 @@ export async function Header() {
               </>
             )}
             {session.user.role === "ADMIN" && (
-              <Link
-                href="/admin/astrologers"
-                className="text-sm text-foreground-muted hover:text-foreground"
-              >
-                Admin
-              </Link>
+              <>
+                <Link
+                  href="/admin/astrologers"
+                  className="text-sm text-foreground-muted hover:text-foreground"
+                >
+                  Astrologers
+                </Link>
+                <Link
+                  href="/admin/bookings"
+                  className="text-sm text-foreground-muted hover:text-foreground"
+                >
+                  Bookings
+                </Link>
+                <Link
+                  href="/admin/payments"
+                  className="text-sm text-foreground-muted hover:text-foreground"
+                >
+                  Payments
+                </Link>
+                <Link
+                  href="/admin/notifications"
+                  className="text-sm text-foreground-muted hover:text-foreground"
+                >
+                  Logs
+                </Link>
+              </>
             )}
             <NotificationBell />
             <span className="text-sm text-foreground-muted">

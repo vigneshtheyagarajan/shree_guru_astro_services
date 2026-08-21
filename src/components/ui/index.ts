@@ -3,6 +3,7 @@ export * from "./Card";
 export * from "./Badge";
 export * from "./Checkbox";
 export * from "./Avatar";
+export * from "./StarRating";
 export * from "./Input";
 export * from "./Select";
 export * from "./Modal";
