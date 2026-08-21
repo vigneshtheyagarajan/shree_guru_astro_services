@@ -34,6 +34,12 @@ export async function Header() {
                 >
                   Services
                 </Link>
+                <Link
+                  href="/astrologer/availability"
+                  className="text-sm text-foreground-muted hover:text-foreground"
+                >
+                  Availability
+                </Link>
               </>
             )}
             {session.user.role === "ADMIN" && (
