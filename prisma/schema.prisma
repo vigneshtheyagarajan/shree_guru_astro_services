@@ -71,6 +71,9 @@ enum NotificationEvent {
   PAYMENT_LINK_SENT
   PAYMENT_RECEIVED
   REVIEW_REQUEST
+  PAYOUT_PROCESSED
+  DISPUTE_RAISED
+  DISPUTE_RESOLVED
 }
 
 enum PaymentStatus {
@@ -78,6 +81,21 @@ enum PaymentStatus {
   PAID
   EXPIRED
   CANCELLED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+  REVERSED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
 }
 
 model User {
@@ -97,6 +115,7 @@ model User {
   bookingsAsClient  Booking[]          @relation("ClientBookings")
   notifications     Notification[]
   chatMessages      ChatMessage[]
+  disputesRaised    Dispute[]
 }
 
 model AstrologerProfile {
@@ -119,11 +138,18 @@ model AstrologerProfile {
   googleTokenExpiry         DateTime?
   googleCalendarConnectedAt DateTime?
 
+  payoutAccountHolderName String?
+  payoutAccountNumber     String?
+  payoutIfscCode          String?
+  razorpayContactId       String?
+  razorpayFundAccountId   String?
+
   services               ServiceOffering[]
   availabilities         AvailabilityRule[]
   availabilityExceptions AvailabilityException[]
   slots                  Slot[]
   bookings               Booking[]
+  payouts                Payout[]
 }
 
 model Service {
@@ -226,6 +252,8 @@ model Booking {
   chatMessages     ChatMessage[]
   paymentLink      PaymentLink?
   review           Review?
+  payout           Payout?
+  dispute          Dispute?
 }
 
 model IntakeSubmission {
@@ -280,4 +308,32 @@ model Review {
   comment      String?
   hidden       Boolean  @default(false)
   createdAt    DateTime @default(now())
+}
+
+model Payout {
+  id               String       @id @default(cuid())
+  bookingId        String       @unique
+  booking          Booking      @relation(fields: [bookingId], references: [id])
+  astrologerId     String
+  astrologer       AstrologerProfile @relation(fields: [astrologerId], references: [id])
+  amount           Int
+  status           PayoutStatus @default(PENDING)
+  razorpayPayoutId String?
+  failureReason    String?
+  createdAt        DateTime     @default(now())
+  processedAt      DateTime?
+}
+
+model Dispute {
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
+  booking        Booking       @relation(fields: [bookingId], references: [id])
+  raisedById     String
+  raisedBy       User          @relation(fields: [raisedById], references: [id])
+  reason         String
+  description    String
+  status         DisputeStatus @default(OPEN)
+  resolutionNote String?
+  createdAt      DateTime      @default(now())
+  resolvedAt     DateTime?
 }

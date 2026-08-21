@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Badge, Button, Card, CardContent, StarRating } from "@/components/ui";
 import { AstrologerCard, type AstrologerCardData } from "@/components/astrologers/AstrologerCard";
+import { getLocale, translate } from "@/lib/i18n/getLocale";
 
 const CATEGORY_ICONS: Record<string, string> = {
   "Vedic Astrology": "🕉️",
@@ -12,14 +13,17 @@ const CATEGORY_ICONS: Record<string, string> = {
   "Western Astrology": "✨",
 };
 
-const HOW_IT_WORKS = [
-  { step: "1", title: "Pick a service", body: "Vedic, Jaamakol, Tarot, and more." },
-  { step: "2", title: "Choose your astrologer", body: "Browse by language, price, and rating." },
-  { step: "3", title: "Book a slot", body: "Chat, call, or meet in person." },
-  { step: "4", title: "Pay after your session", body: "No upfront payment — pay once you're done." },
-];
-
 export default async function HomePage() {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
+
+  const HOW_IT_WORKS = [
+    { step: "1", title: t("home.step1Title"), body: t("home.step1Body") },
+    { step: "2", title: t("home.step2Title"), body: t("home.step2Body") },
+    { step: "3", title: t("home.step3Title"), body: t("home.step3Body") },
+    { step: "4", title: t("home.step4Title"), body: t("home.step4Body") },
+  ];
+
   const [services, approvedProfiles, reviews] = await Promise.all([
     prisma.service.findMany({ where: { isActive: true, phase: 1 }, orderBy: { name: "asc" } }),
     prisma.astrologerProfile.findMany({
@@ -66,36 +70,39 @@ export default async function HomePage() {
               {approvedProfiles.length === 1 ? "" : "s"} ready to help
             </Badge>
           )}
-          <h1 className="max-w-2xl text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
-            Find clarity with <span className="text-gradient-gold">trusted astrologers</span>
-          </h1>
+          {locale === "en" ? (
+            <h1 className="max-w-2xl text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+              Find clarity with <span className="text-gradient-gold">trusted astrologers</span>
+            </h1>
+          ) : (
+            <h1 className="max-w-2xl text-4xl font-semibold leading-tight text-gradient-gold sm:text-5xl">
+              {t("home.heroTitle")}
+            </h1>
+          )}
           <p className="max-w-xl text-base text-foreground-muted sm:text-lg">
-            Vedic Astrology, Jaamakol, Tarot, and more — book a verified astrologer, have your
-            session, and pay only after you&apos;re done.
+            {t("home.heroSubtitle")}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href="/astrologers">
-              <Button size="lg">Find an Astrologer</Button>
+              <Button size="lg">{t("nav.findAstrologer")}</Button>
             </Link>
             <Link href="/apply-astrologer">
               <Button size="lg" variant="secondary">
-                Apply as an Astrologer
+                {t("home.ctaApplyAstrologer")}
               </Button>
             </Link>
           </div>
           <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-foreground-muted">
-            <li>✓ Verified astrologers</li>
-            <li>✓ Pay only after your session</li>
-            <li>✓ Chat, call, or in-person</li>
+            <li>✓ {t("home.trustVerified")}</li>
+            <li>✓ {t("home.trustPayAfter")}</li>
+            <li>✓ {t("home.trustModes")}</li>
           </ul>
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-5xl px-6 py-16">
-        <h2 className="text-2xl font-semibold text-foreground">Explore our services</h2>
-        <p className="mt-1 text-sm text-foreground-muted">
-          Pick a service, then choose the astrologer who&apos;s right for you.
-        </p>
+        <h2 className="text-2xl font-semibold text-foreground">{t("home.servicesTitle")}</h2>
+        <p className="mt-1 text-sm text-foreground-muted">{t("home.servicesSubtitle")}</p>
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => (
             <Link
@@ -121,13 +128,11 @@ export default async function HomePage() {
           <div className="mx-auto w-full max-w-5xl px-6 py-16">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-semibold text-foreground">Meet our astrologers</h2>
-                <p className="mt-1 text-sm text-foreground-muted">
-                  Every astrologer is reviewed by our team before they can take bookings.
-                </p>
+                <h2 className="text-2xl font-semibold text-foreground">{t("home.astrologersTitle")}</h2>
+                <p className="mt-1 text-sm text-foreground-muted">{t("home.astrologersSubtitle")}</p>
               </div>
               <Link href="/astrologers" className="text-sm text-primary hover:text-primary-hover">
-                View all →
+                {t("home.viewAll")}
               </Link>
             </div>
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -140,7 +145,7 @@ export default async function HomePage() {
       )}
 
       <section className="mx-auto w-full max-w-5xl px-6 py-16">
-        <h2 className="text-2xl font-semibold text-foreground">How it works</h2>
+        <h2 className="text-2xl font-semibold text-foreground">{t("home.howItWorksTitle")}</h2>
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {HOW_IT_WORKS.map((item) => (
             <div key={item.step} className="flex flex-col gap-2">
@@ -157,7 +162,7 @@ export default async function HomePage() {
       {reviews.length > 0 && (
         <section className="border-t border-border">
           <div className="mx-auto w-full max-w-5xl px-6 py-16">
-            <h2 className="text-2xl font-semibold text-foreground">What clients are saying</h2>
+            <h2 className="text-2xl font-semibold text-foreground">{t("home.testimonialsTitle")}</h2>
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
               {reviews.map((review) => (
                 <Card key={review.id}>
@@ -179,15 +184,18 @@ export default async function HomePage() {
 
       <section className="border-t border-border bg-background-surface/40">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-4 px-6 py-16 sm:items-center sm:text-center">
-          <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">
-            Ready to find your <span className="text-gradient-gold">answers</span>?
-          </h2>
-          <p className="max-w-md text-sm text-foreground-muted">
-            Book your first session today — verified astrologers, real conversations, pay after
-            you&apos;re done.
-          </p>
+          {locale === "en" ? (
+            <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">
+              Ready to find your <span className="text-gradient-gold">answers</span>?
+            </h2>
+          ) : (
+            <h2 className="text-2xl font-semibold text-gradient-gold sm:text-3xl">
+              {t("home.finalCtaTitle")}
+            </h2>
+          )}
+          <p className="max-w-md text-sm text-foreground-muted">{t("home.finalCtaSubtitle")}</p>
           <Link href="/astrologers">
-            <Button size="lg">Find an Astrologer</Button>
+            <Button size="lg">{t("nav.findAstrologer")}</Button>
           </Link>
         </div>
       </section>

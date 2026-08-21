@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Header } from "@/components/layout/Header";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { getLocale } from "@/lib/i18n/getLocale";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,15 +21,18 @@ export const metadata: Metadata = {
     "Book verified astrologers for Vedic Astrology, Jaamakol, Tarot reading, and more.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Header />
-        {children}
+        <LocaleProvider initialLocale={locale}>
+          <Header />
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );

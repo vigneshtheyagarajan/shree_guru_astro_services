@@ -5,6 +5,7 @@ import { Badge, Card, CardContent, CardHeader, CardTitle, StarRating } from "@/c
 import { ChatPanel } from "@/components/booking/ChatPanel";
 import { BookingStatusActions } from "@/components/booking/BookingStatusActions";
 import { ReviewForm } from "@/components/booking/ReviewForm";
+import { DisputeForm } from "@/components/booking/DisputeForm";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { formatDateTimeLong } from "@/lib/dateFormat";
 
@@ -35,6 +36,7 @@ export default async function BookingDetailPage({
       intakeSubmission: true,
       paymentLink: true,
       review: true,
+      dispute: true,
     },
   });
 
@@ -142,6 +144,34 @@ export default async function BookingDetailPage({
                 <p className="text-sm text-foreground-muted">{booking.review.comment}</p>
               )}
             </div>
+          )}
+
+          {booking.dispute ? (
+            <div className="flex flex-col gap-1 rounded-lg border border-border bg-background-elevated p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">Dispute: {booking.dispute.reason}</p>
+                <Badge
+                  variant={
+                    booking.dispute.status === "RESOLVED"
+                      ? "success"
+                      : booking.dispute.status === "REJECTED"
+                        ? "danger"
+                        : "warning"
+                  }
+                >
+                  {booking.dispute.status.replace(/_/g, " ")}
+                </Badge>
+              </div>
+              <p className="text-sm text-foreground-muted">{booking.dispute.description}</p>
+              {booking.dispute.resolutionNote && (
+                <p className="text-sm text-foreground">
+                  Admin response: {booking.dispute.resolutionNote}
+                </p>
+              )}
+            </div>
+          ) : (
+            (isClientViewer || isAstrologerViewer) &&
+            booking.status !== "CANCELLED" && <DisputeForm bookingId={booking.id} />
           )}
         </CardContent>
       </Card>

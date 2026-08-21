@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AstrologerBrowse } from "@/components/astrologers/AstrologerBrowse";
 import type { AstrologerCardData } from "@/components/astrologers/AstrologerCard";
+import { getLocale, translate } from "@/lib/i18n/getLocale";
 
 export default async function AstrologersPage({
   searchParams,
@@ -8,6 +9,8 @@ export default async function AstrologersPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category: initialCategory } = await searchParams;
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
 
   const profiles = await prisma.astrologerProfile.findMany({
     where: { approvalStatus: "APPROVED" },
@@ -45,16 +48,12 @@ export default async function AstrologersPage({
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-16">
       <header>
-        <h1 className="text-2xl font-semibold text-foreground">Find an Astrologer</h1>
-        <p className="text-sm text-foreground-muted">
-          Browse verified astrologers by category, language, and price.
-        </p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("nav.findAstrologer")}</h1>
+        <p className="text-sm text-foreground-muted">{t("browse.subtitle")}</p>
       </header>
 
       {astrologers.length === 0 ? (
-        <p className="text-sm text-foreground-muted">
-          No astrologers are available yet. Check back soon.
-        </p>
+        <p className="text-sm text-foreground-muted">{t("browse.empty")}</p>
       ) : (
         <AstrologerBrowse
           astrologers={astrologers}

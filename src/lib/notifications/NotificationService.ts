@@ -8,7 +8,10 @@ export type NotificationEvent =
   | "SESSION_STARTING"
   | "PAYMENT_LINK_SENT"
   | "PAYMENT_RECEIVED"
-  | "REVIEW_REQUEST";
+  | "REVIEW_REQUEST"
+  | "PAYOUT_PROCESSED"
+  | "DISPUTE_RAISED"
+  | "DISPUTE_RESOLVED";
 
 export interface NotificationPayload {
   title: string;

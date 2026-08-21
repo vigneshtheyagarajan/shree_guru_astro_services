@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Razorpay, markBookingPaidFromPaymentLink } from "@/lib/payments/razorpay";
+import { updatePayoutFromWebhook } from "@/lib/payments/razorpayPayouts";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -21,6 +22,17 @@ export async function POST(request: Request) {
     const razorpayLinkId = event.payload?.payment_link?.entity?.id;
     if (razorpayLinkId) {
       await markBookingPaidFromPaymentLink(razorpayLinkId);
+    }
+  }
+
+  if (event.event?.startsWith("payout.")) {
+    const payoutEntity = event.payload?.payout?.entity;
+    if (payoutEntity?.id) {
+      await updatePayoutFromWebhook(
+        payoutEntity.id,
+        payoutEntity.status,
+        payoutEntity.failure_reason,
+      );
     }
   }
 

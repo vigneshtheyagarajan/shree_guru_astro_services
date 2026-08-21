@@ -4,12 +4,16 @@ import { Badge, Button } from "@/components/ui";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { MobileNav, type NavLink } from "@/components/layout/MobileNav";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { getLocale, translate } from "@/lib/i18n/getLocale";
 
 export async function Header() {
   const session = await auth();
   const role = session?.user.role;
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
 
-  const links: NavLink[] = [{ href: "/astrologers", label: "Find an Astrologer" }];
+  const links: NavLink[] = [{ href: "/astrologers", label: t("nav.findAstrologer") }];
   if (role === "CLIENT" || role === "ASTROLOGER") {
     links.push({ href: "/bookings", label: "My Bookings" });
   }
@@ -18,6 +22,7 @@ export async function Header() {
       { href: "/astrologer/dashboard", label: "Dashboard" },
       { href: "/astrologer/services", label: "Services" },
       { href: "/astrologer/availability", label: "Availability" },
+      { href: "/astrologer/payouts", label: "Payouts" },
     );
   }
   if (role === "ADMIN") {
@@ -25,6 +30,8 @@ export async function Header() {
       { href: "/admin/astrologers", label: "Astrologers" },
       { href: "/admin/bookings", label: "Bookings" },
       { href: "/admin/payments", label: "Payments" },
+      { href: "/admin/payouts", label: "Payouts" },
+      { href: "/admin/disputes", label: "Disputes" },
       { href: "/admin/moderation", label: "Moderation" },
       { href: "/admin/notifications", label: "Logs" },
     );
@@ -52,6 +59,7 @@ export async function Header() {
                   {link.label}
                 </Link>
               ))}
+              <LanguageSwitcher />
               <NotificationBell />
               <span className="text-sm text-foreground-muted">{session.user.name}</span>
               <Badge variant="primary">{session.user.role}</Badge>
@@ -69,25 +77,27 @@ export async function Header() {
                 href="/astrologers"
                 className="text-sm text-foreground-muted hover:text-foreground"
               >
-                Find an Astrologer
+                {t("nav.findAstrologer")}
               </Link>
+              <LanguageSwitcher />
               <Link href="/login">
                 <Button variant="ghost" size="sm">
-                  Log in
+                  {t("nav.login")}
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm">Sign up</Button>
+                <Button size="sm">{t("nav.signup")}</Button>
               </Link>
             </div>
             <div className="flex items-center gap-2 md:hidden">
+              <LanguageSwitcher />
               <Link href="/login">
                 <Button variant="ghost" size="sm">
-                  Log in
+                  {t("nav.login")}
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm">Sign up</Button>
+                <Button size="sm">{t("nav.signup")}</Button>
               </Link>
             </div>
           </>
