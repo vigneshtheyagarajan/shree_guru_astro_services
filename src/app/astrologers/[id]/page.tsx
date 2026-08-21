@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Avatar, Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 
@@ -78,9 +79,11 @@ export default async function AstrologerProfilePage({
                       </Badge>
                     ))}
                   </div>
-                  <Button size="sm" className="self-start" disabled title="Booking coming soon">
-                    Book Now
-                  </Button>
+                  <Link href={`/book/${offering.id}`}>
+                    <Button size="sm" className="self-start">
+                      Book Now
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
