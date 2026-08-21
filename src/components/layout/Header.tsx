@@ -20,6 +20,14 @@ export async function Header() {
             >
               Find an Astrologer
             </Link>
+            {(session.user.role === "CLIENT" || session.user.role === "ASTROLOGER") && (
+              <Link
+                href="/bookings"
+                className="text-sm text-foreground-muted hover:text-foreground"
+              >
+                My Bookings
+              </Link>
+            )}
             {session.user.role === "ASTROLOGER" && (
               <>
                 <Link
