@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateShort, formatTime } from "@/lib/dateFormat";
+
 export interface SlotOption {
   id: string;
   startAt: string;
@@ -25,11 +27,7 @@ export function SlotPicker({
 
   const byDate = new Map<string, SlotOption[]>();
   for (const slot of slots) {
-    const dateKey = new Date(slot.startAt).toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
+    const dateKey = formatDateShort(slot.startAt);
     const existing = byDate.get(dateKey) ?? [];
     existing.push(slot);
     byDate.set(dateKey, existing);
@@ -54,10 +52,7 @@ export function SlotPicker({
                       : "rounded-lg border border-border bg-background-elevated px-3 py-1.5 text-sm text-foreground hover:border-primary"
                   }
                 >
-                  {new Date(slot.startAt).toLocaleTimeString(undefined, {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  {formatTime(slot.startAt)}
                 </button>
               );
             })}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from "@/components/ui";
+import { formatDateShort } from "@/lib/dateFormat";
 
 const DAY_LABELS = [
   "Sunday",
@@ -238,7 +239,7 @@ export function AvailabilityManager({
                 className="flex items-center justify-between rounded-lg border border-border bg-background-elevated px-3 py-2 text-sm"
               >
                 <span>
-                  {new Date(exception.date).toLocaleDateString()} ·{" "}
+                  {formatDateShort(exception.date)} ·{" "}
                   {exception.type === "BLOCKED"
                     ? "Blocked"
                     : `Extra open ${exception.startTime}–${exception.endTime}`}

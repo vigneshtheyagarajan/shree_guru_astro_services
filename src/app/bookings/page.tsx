@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent } from "@/components/ui";
+import { formatDateTimeShort } from "@/lib/dateFormat";
 
 const STATUS_VARIANT: Record<string, "warning" | "success" | "danger" | "default" | "primary"> = {
   PENDING: "warning",
@@ -72,13 +73,7 @@ export default async function BookingsListPage() {
                         {booking.serviceOffering.service.name} with {counterpartName}
                       </p>
                       <p className="text-sm text-foreground-muted">
-                        {new Date(booking.slot.startAt).toLocaleString(undefined, {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
+                        {formatDateTimeShort(booking.slot.startAt)}
                       </p>
                     </div>
                     <Badge variant={STATUS_VARIANT[booking.status] ?? "default"}>

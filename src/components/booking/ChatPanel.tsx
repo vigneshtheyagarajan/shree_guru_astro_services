@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { getPusherClient } from "@/lib/chat/pusherClient";
+import { formatDateTimeShort, formatTime } from "@/lib/dateFormat";
 
 interface ChatMessageItem {
   id: string;
@@ -95,15 +96,7 @@ export function ChatPanel({
   if (!isOpen && now < new Date(windowStart)) {
     return (
       <div className="rounded-lg border border-border bg-background-elevated p-3 text-sm text-foreground-muted">
-        Chat opens at{" "}
-        {new Date(windowStart).toLocaleString(undefined, {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })}
-        .
+        Chat opens at {formatDateTimeShort(windowStart)}.
       </div>
     );
   }
@@ -134,10 +127,7 @@ export function ChatPanel({
                 {message.body}
               </div>
               <span className="mt-0.5 text-[10px] text-foreground-muted">
-                {new Date(message.sentAt).toLocaleTimeString(undefined, {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+                {formatTime(message.sentAt)}
               </span>
             </div>
           );

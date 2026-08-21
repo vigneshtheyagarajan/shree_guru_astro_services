@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { NotificationService } from "@/lib/notifications/NotificationService";
+import { formatDateTimeLong } from "@/lib/dateFormat";
 
 const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL"] as const;
 
@@ -99,13 +100,7 @@ export async function POST(request: Request) {
     });
 
     const bookingUrl = `/bookings/${booking.id}`;
-    const scheduledFor = slot.startAt.toLocaleString(undefined, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    const scheduledFor = formatDateTimeLong(slot.startAt);
 
     await Promise.all([
       NotificationService.send(session.user.id, "BOOKING_CONFIRMED", {

@@ -3,7 +3,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { ChatPanel } from "@/components/booking/ChatPanel";
+import { BookingStatusActions } from "@/components/booking/BookingStatusActions";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
+import { formatDateTimeLong } from "@/lib/dateFormat";
 
 const MODE_LABELS: Record<string, string> = {
   IN_PERSON: "In-person",
@@ -30,6 +32,7 @@ export default async function BookingDetailPage({
       serviceOffering: { include: { service: true } },
       slot: true,
       intakeSubmission: true,
+      paymentLink: true,
     },
   });
 
@@ -70,15 +73,7 @@ export default async function BookingDetailPage({
             </div>
             <div className="col-span-2">
               <dt className="text-foreground-muted">Scheduled for</dt>
-              <dd className="text-foreground">
-                {booking.slot.startAt.toLocaleString(undefined, {
-                  weekday: "long",
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </dd>
+              <dd className="text-foreground">{formatDateTimeLong(booking.slot.startAt)}</dd>
             </div>
           </dl>
 
@@ -105,6 +100,32 @@ export default async function BookingDetailPage({
               windowEnd={new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString()}
               currentUserId={session.user.id}
             />
+          )}
+
+          {isAstrologerViewer && (booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS") && (
+            <BookingStatusActions bookingId={booking.id} />
+          )}
+
+          {isClientViewer && booking.status === "PAYMENT_LINK_SENT" && booking.paymentLink && (
+            <div className="flex items-center justify-between rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
+              <p className="text-foreground">
+                Payment of ₹{booking.paymentLink.amount} is due for this session.
+              </p>
+              <a
+                href={booking.paymentLink.shortUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
+              >
+                Pay Now
+              </a>
+            </div>
+          )}
+
+          {(booking.status === "PAID" || booking.status === "RATED") && (
+            <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-foreground">
+              Payment received. Thank you!
+            </div>
           )}
         </CardContent>
       </Card>

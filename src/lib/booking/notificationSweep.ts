@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationService } from "@/lib/notifications/NotificationService";
+import { formatDateTimeLong } from "@/lib/dateFormat";
 
 const bookingInclude = {
   slot: true,
@@ -15,15 +16,7 @@ interface ReminderBooking {
   slot: { startAt: Date };
 }
 
-function formatSchedule(date: Date) {
-  return date.toLocaleString(undefined, {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+const formatSchedule = formatDateTimeLong;
 
 async function notifyBoth(
   booking: ReminderBooking,

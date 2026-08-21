@@ -5,6 +5,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Select,
 import { IntakeFormRenderer, type IntakeValues } from "@/components/forms/IntakeFormRenderer";
 import { SlotPicker, type SlotOption } from "@/components/booking/SlotPicker";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
+import { formatDateTimeLong } from "@/lib/dateFormat";
 
 type Mode = "IN_PERSON" | "CHAT" | "PHONE_CALL";
 
@@ -177,13 +178,7 @@ export function BookingFlow({
                 <div className="col-span-2">
                   <dt className="text-foreground-muted">Slot</dt>
                   <dd className="text-foreground">
-                    {new Date(selectedSlot.startAt).toLocaleString(undefined, {
-                      weekday: "long",
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
+                    {formatDateTimeLong(selectedSlot.startAt)}
                   </dd>
                 </div>
               </dl>
