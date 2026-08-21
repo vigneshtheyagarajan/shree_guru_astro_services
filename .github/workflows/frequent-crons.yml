@@ -1,0 +1,39 @@
+name: Frequent Crons
+
+# Vercel Hobby's own Cron only supports once-a-day schedules, but a few of
+# this app's cron routes need to run much more often (booking reminders,
+# presence expiry). This workflow fills that gap for free by hitting those
+# routes on a 5-minute schedule. GitHub may delay scheduled runs under load,
+# and disables them after 60 days without any repo activity (any push resets
+# that clock) -- acceptable for these non-critical, self-correcting jobs.
+#
+# Requires two repo secrets (Settings -> Secrets and variables -> Actions):
+#   APP_URL     the deployed site's base URL, e.g. https://shreeguruastro.com
+#   CRON_SECRET the same value set as CRON_SECRET in the Vercel project
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Booking notifications
+        continue-on-error: true
+        run: >
+          curl -fsS -X GET "${{ secrets.APP_URL }}/api/cron/booking-notifications"
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+      - name: Expire stale astrologer presence
+        continue-on-error: true
+        run: >
+          curl -fsS -X GET "${{ secrets.APP_URL }}/api/cron/expire-presence"
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+      - name: Sync Google Calendar
+        continue-on-error: true
+        run: >
+          curl -fsS -X GET "${{ secrets.APP_URL }}/api/cron/sync-google-calendar"
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
