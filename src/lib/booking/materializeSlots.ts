@@ -44,22 +44,35 @@ export async function materializeSlotsForAstrologer(astrologerId: string) {
     const day = new Date(today);
     day.setDate(day.getDate() + dayOffset);
 
-    const exceptionForDay = exceptions.find(
+    const dayExceptions = exceptions.filter(
       (exception) => startOfDay(exception.date).getTime() === day.getTime(),
     );
 
-    if (exceptionForDay?.type === "BLOCKED") {
-      continue;
-    }
+    // A BLOCKED exception with no time range blocks the whole day (e.g. a
+    // manual day off). One with a time range only blocks that sub-window
+    // (e.g. a single Google Calendar event) -- other hours stay bookable.
+    const fullDayBlocked = dayExceptions.some(
+      (exception) => exception.type === "BLOCKED" && !exception.startTime,
+    );
+    if (fullDayBlocked) continue;
+
+    const blockedRanges = dayExceptions
+      .filter((exception) => exception.type === "BLOCKED" && exception.startTime && exception.endTime)
+      .map((exception) => ({
+        start: parseTimeToMinutes(exception.startTime as string),
+        end: parseTimeToMinutes(exception.endTime as string),
+      }));
 
     const windows: { startTime: string; endTime: string; slotDurationMinutes: number }[] = [];
 
-    if (exceptionForDay?.type === "EXTRA_OPEN" && exceptionForDay.startTime && exceptionForDay.endTime) {
-      windows.push({
-        startTime: exceptionForDay.startTime,
-        endTime: exceptionForDay.endTime,
-        slotDurationMinutes: 30,
-      });
+    for (const exception of dayExceptions) {
+      if (exception.type === "EXTRA_OPEN" && exception.startTime && exception.endTime) {
+        windows.push({
+          startTime: exception.startTime,
+          endTime: exception.endTime,
+          slotDurationMinutes: 30,
+        });
+      }
     }
 
     const dayRules = rules.filter((rule) => rule.dayOfWeek === day.getDay());
@@ -80,10 +93,16 @@ export async function materializeSlotsForAstrologer(astrologerId: string) {
         minutes + window.slotDurationMinutes <= endMinutes;
         minutes += window.slotDurationMinutes
       ) {
+        const slotEndMinutes = minutes + window.slotDurationMinutes;
+        const overlapsBlockedRange = blockedRanges.some(
+          (range) => minutes < range.end && slotEndMinutes > range.start,
+        );
+        if (overlapsBlockedRange) continue;
+
         const slotStart = dateAtMinutes(day, minutes);
         if (slotStart < new Date()) continue;
 
-        const slotEnd = dateAtMinutes(day, minutes + window.slotDurationMinutes);
+        const slotEnd = dateAtMinutes(day, slotEndMinutes);
         validStarts.push(slotStart);
         slotsToCreate.push({ astrologerId, startAt: slotStart, endAt: slotEnd });
       }

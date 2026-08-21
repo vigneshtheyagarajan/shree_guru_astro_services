@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { NotificationService } from "@/lib/notifications/NotificationService";
 import { formatDateTimeLong } from "@/lib/dateFormat";
+import { pushBookingEvent } from "@/lib/integrations/googleCalendar";
 
 const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL"] as const;
 
@@ -103,6 +104,22 @@ export async function POST(request: Request) {
 
       return created;
     });
+
+    try {
+      const googleEventId = await pushBookingEvent(offering.astrologer, {
+        id: booking.id,
+        startAt: slot.startAt,
+        endAt: slot.endAt,
+        serviceName: offering.service.name,
+        clientName: session.user.name ?? "Client",
+        mode,
+      });
+      if (googleEventId) {
+        await prisma.booking.update({ where: { id: booking.id }, data: { googleEventId } });
+      }
+    } catch (error) {
+      console.error("Failed to push booking to Google Calendar", error);
+    }
 
     const bookingUrl = `/bookings/${booking.id}`;
     const scheduledFor = formatDateTimeLong(slot.startAt);

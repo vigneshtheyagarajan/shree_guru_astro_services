@@ -34,6 +34,11 @@ enum ExceptionType {
   EXTRA_OPEN
 }
 
+enum AvailabilityExceptionSource {
+  MANUAL
+  GOOGLE
+}
+
 enum SlotStatus {
   OPEN
   LOCKED
@@ -85,6 +90,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  emailNotificationsEnabled Boolean @default(true)
+  smsNotificationsEnabled   Boolean @default(false)
+
   astrologerProfile AstrologerProfile?
   bookingsAsClient  Booking[]          @relation("ClientBookings")
   notifications     Notification[]
@@ -105,6 +113,11 @@ model AstrologerProfile {
   ratingCount     Int            @default(0)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+
+  googleAccessToken         String?
+  googleRefreshToken        String?
+  googleTokenExpiry         DateTime?
+  googleCalendarConnectedAt DateTime?
 
   services               ServiceOffering[]
   availabilities         AvailabilityRule[]
@@ -158,14 +171,16 @@ model AvailabilityRule {
 }
 
 model AvailabilityException {
-  id           String            @id @default(cuid())
-  astrologerId String
-  astrologer   AstrologerProfile @relation(fields: [astrologerId], references: [id])
-  date         DateTime
-  type         ExceptionType
-  startTime    String?
-  endTime      String?
-  createdAt    DateTime          @default(now())
+  id            String                      @id @default(cuid())
+  astrologerId  String
+  astrologer    AstrologerProfile           @relation(fields: [astrologerId], references: [id])
+  date          DateTime
+  type          ExceptionType
+  startTime     String?
+  endTime       String?
+  source        AvailabilityExceptionSource @default(MANUAL)
+  googleEventId String?
+  createdAt     DateTime                    @default(now())
 }
 
 model Slot {
@@ -205,6 +220,8 @@ model Booking {
   reminder10minSentAt   DateTime?
   sessionStartingSentAt DateTime?
 
+  googleEventId String?
+
   intakeSubmission IntakeSubmission?
   chatMessages     ChatMessage[]
   paymentLink      PaymentLink?
@@ -212,12 +229,13 @@ model Booking {
 }
 
 model IntakeSubmission {
-  id          String   @id @default(cuid())
-  bookingId   String   @unique
-  booking     Booking  @relation(fields: [bookingId], references: [id])
-  data        Json
-  attachments String[]
-  createdAt   DateTime @default(now())
+  id                String   @id @default(cuid())
+  bookingId         String   @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id])
+  data              Json
+  attachments       String[]
+  attachmentsHidden Boolean  @default(false)
+  createdAt         DateTime @default(now())
 }
 
 model ChatMessage {
@@ -260,5 +278,6 @@ model Review {
   astrologerId String
   rating       Int
   comment      String?
+  hidden       Boolean  @default(false)
   createdAt    DateTime @default(now())
 }

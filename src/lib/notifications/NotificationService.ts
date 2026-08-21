@@ -1,5 +1,6 @@
 import { sendInAppNotification } from "@/lib/notifications/adapters/in-app";
 import { sendEmailNotification } from "@/lib/notifications/adapters/email";
+import { sendSmsNotification } from "@/lib/notifications/adapters/sms";
 
 export type NotificationEvent =
   | "BOOKING_CONFIRMED"
@@ -27,6 +28,7 @@ export const NotificationService = {
     const results = await Promise.allSettled([
       sendInAppNotification(userId, event, payload),
       sendEmailNotification(userId, event, payload),
+      sendSmsNotification(userId, event, payload),
     ]);
     for (const result of results) {
       if (result.status === "rejected") {

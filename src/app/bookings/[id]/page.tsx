@@ -159,12 +159,18 @@ export default async function BookingDetailPage({
                 <div key={field.key}>
                   <dt className="text-foreground-muted">{field.label}</dt>
                   {field.type === "photo" ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- user-uploaded Cloudinary URL
-                    <img
-                      src={value}
-                      alt={field.label}
-                      className="mt-1 h-24 w-24 rounded-lg border border-border object-cover"
-                    />
+                    booking.intakeSubmission?.attachmentsHidden && !isAdminViewer ? (
+                      <p className="mt-1 text-xs text-foreground-muted">
+                        This photo has been hidden by moderation.
+                      </p>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- user-uploaded Cloudinary URL
+                      <img
+                        src={value}
+                        alt={field.label}
+                        className="mt-1 h-24 w-24 rounded-lg border border-border object-cover"
+                      />
+                    )
                   ) : (
                     <dd className="text-foreground">{value}</dd>
                   )}

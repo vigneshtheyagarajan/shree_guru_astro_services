@@ -29,6 +29,7 @@ export default async function HomePage() {
       take: 3,
     }),
     prisma.review.findMany({
+      where: { hidden: false },
       include: { booking: { include: { client: true, astrologer: { include: { user: true } } } } },
       orderBy: { createdAt: "desc" },
       take: 3,

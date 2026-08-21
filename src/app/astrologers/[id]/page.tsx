@@ -39,7 +39,7 @@ export default async function AstrologerProfilePage({
   }
 
   const reviews = await prisma.review.findMany({
-    where: { astrologerId: profile.id },
+    where: { astrologerId: profile.id, hidden: false },
     include: { booking: { include: { client: true } } },
     orderBy: { createdAt: "desc" },
   });

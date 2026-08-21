@@ -5,7 +5,7 @@ import type { NotificationAdapter } from "@/lib/notifications/NotificationServic
 
 export const sendEmailNotification: NotificationAdapter = async (userId, event, payload) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return;
+  if (!user || !user.emailNotificationsEnabled) return;
 
   try {
     const result = await resend.emails.send({

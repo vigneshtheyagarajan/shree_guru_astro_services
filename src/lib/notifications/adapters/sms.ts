@@ -1,8 +1,31 @@
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
+import { twilioClient, TWILIO_PHONE_NUMBER } from "@/lib/sms/twilio";
 import type { NotificationAdapter } from "@/lib/notifications/NotificationService";
 
-// Phase 2 stub — not wired into NotificationService.send() yet. Swap in a
-// real provider (Twilio/MSG91) behind this same NotificationAdapter shape
-// when SMS is added; no call sites need to change.
-export const sendSmsNotification: NotificationAdapter = async (userId, event) => {
-  console.log(`[sms stub] Would notify user ${userId} for event ${event} (not implemented)`);
+export const sendSmsNotification: NotificationAdapter = async (userId, event, payload) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user?.phone || !user.smsNotificationsEnabled) return;
+
+  try {
+    const result = await twilioClient.messages.create({
+      to: user.phone,
+      from: TWILIO_PHONE_NUMBER,
+      body: `${payload.title}: ${payload.message}`,
+    });
+    if (result.errorCode) {
+      console.error("Twilio returned an error", event, result.errorCode, result.errorMessage);
+    }
+  } catch (error) {
+    console.error("Failed to send SMS notification", event, error);
+  }
+
+  await prisma.notification.create({
+    data: {
+      userId,
+      event,
+      channel: "SMS",
+      payload: payload as unknown as Prisma.InputJsonValue,
+    },
+  });
 };

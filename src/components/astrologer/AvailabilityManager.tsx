@@ -29,6 +29,7 @@ interface Exception {
   type: "BLOCKED" | "EXTRA_OPEN";
   startTime: string | null;
   endTime: string | null;
+  source: "MANUAL" | "GOOGLE";
 }
 
 export function AvailabilityManager({
@@ -241,8 +242,13 @@ export function AvailabilityManager({
                 <span>
                   {formatDateShort(exception.date)} ·{" "}
                   {exception.type === "BLOCKED"
-                    ? "Blocked"
+                    ? exception.startTime
+                      ? `Blocked ${exception.startTime}–${exception.endTime}`
+                      : "Blocked (all day)"
                     : `Extra open ${exception.startTime}–${exception.endTime}`}
+                  {exception.source === "GOOGLE" && (
+                    <span className="text-foreground-muted"> (from Google)</span>
+                  )}
                 </span>
                 <Button
                   variant="ghost"

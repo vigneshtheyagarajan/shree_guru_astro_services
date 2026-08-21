@@ -2,8 +2,15 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AvailabilityManager } from "@/components/astrologer/AvailabilityManager";
+import { GoogleCalendarCard } from "@/components/astrologer/GoogleCalendarCard";
+import { Badge } from "@/components/ui";
 
-export default async function AstrologerAvailabilityPage() {
+export default async function AstrologerAvailabilityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ google?: string }>;
+}) {
+  const { google } = await searchParams;
   const session = await auth();
 
   if (!session?.user) {
@@ -40,6 +47,22 @@ export default async function AstrologerAvailabilityPage() {
           Bookable slots for the next 14 days are generated automatically from this.
         </p>
       </header>
+
+      {google === "connected" && (
+        <Badge variant="success" className="w-fit">
+          Google Calendar connected
+        </Badge>
+      )}
+      {google === "error" && (
+        <Badge variant="danger" className="w-fit">
+          Failed to connect Google Calendar. Please try again.
+        </Badge>
+      )}
+
+      <GoogleCalendarCard
+        connected={!!profile.googleRefreshToken}
+        connectedAt={profile.googleCalendarConnectedAt?.toISOString() ?? null}
+      />
 
       <AvailabilityManager
         initialRules={rules}

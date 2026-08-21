@@ -43,7 +43,7 @@ export async function POST(
     await tx.booking.update({ where: { id }, data: { status: "RATED" } });
 
     const aggregate = await tx.review.aggregate({
-      where: { astrologerId: booking.astrologerId },
+      where: { astrologerId: booking.astrologerId, hidden: false },
       _avg: { rating: true },
       _count: true,
     });

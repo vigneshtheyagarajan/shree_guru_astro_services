@@ -25,8 +25,12 @@ export async function Header() {
       { href: "/admin/astrologers", label: "Astrologers" },
       { href: "/admin/bookings", label: "Bookings" },
       { href: "/admin/payments", label: "Payments" },
+      { href: "/admin/moderation", label: "Moderation" },
       { href: "/admin/notifications", label: "Logs" },
     );
+  }
+  if (role) {
+    links.push({ href: "/settings", label: "Settings" });
   }
 
   return (
