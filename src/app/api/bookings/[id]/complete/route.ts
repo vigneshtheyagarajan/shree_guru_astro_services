@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createPaymentLinkForBooking } from "@/lib/payments/razorpay";
+import { matchNextInQueue } from "@/lib/chat/chatQueue";
 
 export async function POST(
   _request: Request,
@@ -37,6 +38,14 @@ export async function POST(
   } catch (error) {
     console.error("Failed to create Razorpay payment link", error);
     // Booking stays COMPLETED without a link; admin can retry later.
+  }
+
+  if (booking.isInstant) {
+    try {
+      await matchNextInQueue(booking.astrologerId);
+    } catch (error) {
+      console.error("Failed to match next chat-now queue entry", error);
+    }
   }
 
   const updated = await prisma.booking.findUnique({ where: { id } });

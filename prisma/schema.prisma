@@ -27,6 +27,20 @@ enum ConsultationMode {
   IN_PERSON
   CHAT
   PHONE_CALL
+  VIDEO_CALL
+}
+
+enum QueueStatus {
+  WAITING
+  MATCHED
+  CANCELLED
+}
+
+enum WalletTransactionType {
+  TOP_UP
+  BOOKING_PAYMENT
+  REFUND
+  LOYALTY_BONUS
 }
 
 enum ExceptionType {
@@ -74,6 +88,8 @@ enum NotificationEvent {
   PAYOUT_PROCESSED
   DISPUTE_RAISED
   DISPUTE_RESOLVED
+  CHAT_MATCHED
+  WALLET_TOPPED_UP
 }
 
 enum PaymentStatus {
@@ -116,6 +132,8 @@ model User {
   notifications     Notification[]
   chatMessages      ChatMessage[]
   disputesRaised    Dispute[]
+  chatQueueEntries  ChatQueueEntry[]
+  wallet            Wallet?
 }
 
 model AstrologerProfile {
@@ -144,12 +162,16 @@ model AstrologerProfile {
   razorpayContactId       String?
   razorpayFundAccountId   String?
 
+  isOnline        Boolean   @default(false)
+  lastHeartbeatAt DateTime?
+
   services               ServiceOffering[]
   availabilities         AvailabilityRule[]
   availabilityExceptions AvailabilityException[]
   slots                  Slot[]
   bookings               Booking[]
   payouts                Payout[]
+  chatQueueEntries       ChatQueueEntry[]
 }
 
 model Service {
@@ -180,7 +202,8 @@ model ServiceOffering {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  bookings Booking[]
+  bookings         Booking[]
+  chatQueueEntries ChatQueueEntry[]
 
   @@unique([astrologerId, serviceId])
 }
@@ -248,12 +271,17 @@ model Booking {
 
   googleEventId String?
 
+  dailyRoomUrl  String?
+  dailyRoomName String?
+  isInstant     Boolean @default(false)
+
   intakeSubmission IntakeSubmission?
   chatMessages     ChatMessage[]
   paymentLink      PaymentLink?
   review           Review?
   payout           Payout?
   dispute          Dispute?
+  chatQueueEntry   ChatQueueEntry?
 }
 
 model IntakeSubmission {
@@ -336,4 +364,54 @@ model Dispute {
   resolutionNote String?
   createdAt      DateTime      @default(now())
   resolvedAt     DateTime?
+}
+
+model ChatQueueEntry {
+  id                String            @id @default(cuid())
+  clientId          String
+  client            User              @relation(fields: [clientId], references: [id])
+  astrologerId      String
+  astrologer        AstrologerProfile @relation(fields: [astrologerId], references: [id])
+  serviceOfferingId String
+  serviceOffering   ServiceOffering   @relation(fields: [serviceOfferingId], references: [id])
+  status            QueueStatus       @default(WAITING)
+  bookingId         String?           @unique
+  booking           Booking?          @relation(fields: [bookingId], references: [id])
+  createdAt         DateTime          @default(now())
+  matchedAt         DateTime?
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions WalletTransaction[]
+  topUps       WalletTopUp[]
+}
+
+model WalletTransaction {
+  id        String                @id @default(cuid())
+  walletId  String
+  wallet    Wallet                @relation(fields: [walletId], references: [id])
+  amount    Int
+  type      WalletTransactionType
+  bookingId String?
+  createdAt DateTime              @default(now())
+}
+
+model WalletTopUp {
+  id             String        @id @default(cuid())
+  walletId       String
+  wallet         Wallet        @relation(fields: [walletId], references: [id])
+  amount         Int
+  bonusAmount    Int           @default(0)
+  razorpayLinkId String
+  shortUrl       String
+  status         PaymentStatus @default(CREATED)
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
 }

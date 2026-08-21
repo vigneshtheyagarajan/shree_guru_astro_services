@@ -21,6 +21,7 @@ export function AstrologerBrowse({
   const [language, setLanguage] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [onlineOnly, setOnlineOnly] = useState(false);
 
   const filtered = useMemo(() => {
     return astrologers.filter((astrologer) => {
@@ -28,9 +29,10 @@ export function AstrologerBrowse({
       if (language && !astrologer.languages.includes(language)) return false;
       if (minPrice && (astrologer.startingPrice ?? Infinity) < Number(minPrice)) return false;
       if (maxPrice && (astrologer.startingPrice ?? -Infinity) > Number(maxPrice)) return false;
+      if (onlineOnly && !astrologer.isOnline) return false;
       return true;
     });
-  }, [astrologers, category, language, minPrice, maxPrice]);
+  }, [astrologers, category, language, minPrice, maxPrice, onlineOnly]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -67,9 +69,11 @@ export function AstrologerBrowse({
           onChange={(event) => setMaxPrice(event.target.value)}
           className="w-32"
         />
-        <div title="Live online status is coming soon">
-          <Checkbox label={t("browse.onlineNow")} disabled />
-        </div>
+        <Checkbox
+          label={t("browse.onlineNow")}
+          checked={onlineOnly}
+          onChange={(event) => setOnlineOnly(event.target.checked)}
+        />
       </div>
 
       {filtered.length === 0 ? (

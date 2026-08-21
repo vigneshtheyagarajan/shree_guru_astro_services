@@ -12,11 +12,14 @@ import {
   StarRating,
 } from "@/components/ui";
 import { formatDateShort } from "@/lib/dateFormat";
+import { ChatNowButton } from "@/components/booking/ChatNowButton";
+import { auth } from "@/lib/auth";
 
 const MODE_LABELS: Record<string, string> = {
   IN_PERSON: "In-person",
   CHAT: "Chat",
   PHONE_CALL: "Phone call",
+  VIDEO_CALL: "Video call",
 };
 
 export default async function AstrologerProfilePage({
@@ -25,6 +28,7 @@ export default async function AstrologerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
 
   const profile = await prisma.astrologerProfile.findUnique({
     where: { id },
@@ -51,7 +55,15 @@ export default async function AstrologerProfilePage({
           <div className="flex items-start gap-4">
             <Avatar name={profile.user.name} photoUrl={profile.photoUrl} className="h-16 w-16" />
             <div>
-              <h1 className="text-xl font-semibold text-foreground">{profile.user.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-semibold text-foreground">{profile.user.name}</h1>
+                {profile.isOnline && (
+                  <Badge variant="success" className="gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
+                    Online now
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-foreground-muted">
                 {profile.languages.join(", ") || "Languages not listed"}
                 {profile.experienceYears != null && ` · ${profile.experienceYears} yrs experience`}
@@ -95,11 +107,18 @@ export default async function AstrologerProfilePage({
                       </Badge>
                     ))}
                   </div>
-                  <Link href={`/book/${offering.id}`}>
-                    <Button size="sm" className="self-start">
-                      Book Now
-                    </Button>
-                  </Link>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/book/${offering.id}`}>
+                      <Button size="sm" className="self-start">
+                        Book Now
+                      </Button>
+                    </Link>
+                    {profile.isOnline &&
+                      offering.modes.includes("CHAT") &&
+                      session?.user.role === "CLIENT" && (
+                        <ChatNowButton serviceOfferingId={offering.id} />
+                      )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

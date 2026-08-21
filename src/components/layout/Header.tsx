@@ -17,6 +17,9 @@ export async function Header() {
   if (role === "CLIENT" || role === "ASTROLOGER") {
     links.push({ href: "/bookings", label: "My Bookings" });
   }
+  if (role === "CLIENT") {
+    links.push({ href: "/wallet", label: "Wallet" });
+  }
   if (role === "ASTROLOGER") {
     links.push(
       { href: "/astrologer/dashboard", label: "Dashboard" },

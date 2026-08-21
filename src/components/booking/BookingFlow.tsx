@@ -8,7 +8,7 @@ import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { formatDateTimeLong } from "@/lib/dateFormat";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-type Mode = "IN_PERSON" | "CHAT" | "PHONE_CALL";
+type Mode = "IN_PERSON" | "CHAT" | "PHONE_CALL" | "VIDEO_CALL";
 
 interface OfferingData {
   id: string;
@@ -31,6 +31,7 @@ export function BookingFlow({
     IN_PERSON: t("booking.modeInPerson"),
     CHAT: t("booking.modeChat"),
     PHONE_CALL: t("booking.modePhoneCall"),
+    VIDEO_CALL: t("booking.modeVideoCall"),
   };
   const STEPS = [
     t("booking.stepService"),
@@ -219,6 +220,11 @@ export function BookingFlow({
               {mode === "CHAT" && (
                 <p className="text-sm text-foreground-muted">
                   Your chat will open at your scheduled time.
+                </p>
+              )}
+              {mode === "VIDEO_CALL" && (
+                <p className="text-sm text-foreground-muted">
+                  Your video call will open at your scheduled time.
                 </p>
               )}
             </div>

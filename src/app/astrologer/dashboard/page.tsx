@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { OnlineToggle } from "@/components/astrologer/OnlineToggle";
 
 const STATUS_COPY: Record<string, { variant: "warning" | "success" | "danger"; message: string }> = {
   PENDING: {
@@ -54,6 +55,9 @@ export default async function AstrologerDashboardPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-foreground-muted">{status.message}</p>
+          {profile.approvalStatus === "APPROVED" && (
+            <OnlineToggle initialOnline={profile.isOnline} />
+          )}
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-foreground-muted">Languages</dt>

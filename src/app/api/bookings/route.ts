@@ -5,8 +5,9 @@ import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { NotificationService } from "@/lib/notifications/NotificationService";
 import { formatDateTimeLong } from "@/lib/dateFormat";
 import { pushBookingEvent } from "@/lib/integrations/googleCalendar";
+import { createRoomForBooking } from "@/lib/video/daily";
 
-const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL"] as const;
+const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL", "VIDEO_CALL"] as const;
 
 class SlotUnavailableError extends Error {}
 
@@ -119,6 +120,21 @@ export async function POST(request: Request) {
       }
     } catch (error) {
       console.error("Failed to push booking to Google Calendar", error);
+    }
+
+    if (mode === "VIDEO_CALL") {
+      try {
+        const { roomUrl, roomName } = await createRoomForBooking({
+          id: booking.id,
+          endAt: slot.endAt,
+        });
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { dailyRoomUrl: roomUrl, dailyRoomName: roomName },
+        });
+      } catch (error) {
+        console.error("Failed to create Daily.co video room", error);
+      }
     }
 
     const bookingUrl = `/bookings/${booking.id}`;

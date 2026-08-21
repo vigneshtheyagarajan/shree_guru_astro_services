@@ -11,7 +11,9 @@ export type NotificationEvent =
   | "REVIEW_REQUEST"
   | "PAYOUT_PROCESSED"
   | "DISPUTE_RAISED"
-  | "DISPUTE_RESOLVED";
+  | "DISPUTE_RESOLVED"
+  | "CHAT_MATCHED"
+  | "WALLET_TOPPED_UP";
 
 export interface NotificationPayload {
   title: string;

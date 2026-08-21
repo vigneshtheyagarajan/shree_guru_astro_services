@@ -56,6 +56,7 @@ export default async function HomePage() {
       ratingCount: profile.ratingCount,
       categories,
       startingPrice: prices.length > 0 ? Math.min(...prices) : null,
+      isOnline: profile.isOnline,
     };
   });
 

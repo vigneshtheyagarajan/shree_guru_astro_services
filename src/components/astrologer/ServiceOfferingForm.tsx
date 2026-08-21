@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Checkbox, Input } from "@/components/ui";
 
-type Mode = "IN_PERSON" | "CHAT" | "PHONE_CALL";
+type Mode = "IN_PERSON" | "CHAT" | "PHONE_CALL" | "VIDEO_CALL";
 
 const MODE_LABELS: Record<Mode, string> = {
   IN_PERSON: "In-person",
   CHAT: "Chat",
   PHONE_CALL: "Phone call",
+  VIDEO_CALL: "Video call",
 };
 
 export function ServiceOfferingForm({

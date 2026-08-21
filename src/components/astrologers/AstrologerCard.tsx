@@ -12,6 +12,7 @@ export interface AstrologerCardData {
   ratingCount: number;
   categories: string[];
   startingPrice: number | null;
+  isOnline: boolean;
 }
 
 export function AstrologerCard({ astrologer }: { astrologer: AstrologerCardData }) {
@@ -23,9 +24,11 @@ export function AstrologerCard({ astrologer }: { astrologer: AstrologerCardData 
             <div className="relative shrink-0">
               <Avatar name={astrologer.name} photoUrl={astrologer.photoUrl} />
               <span
-                className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background-surface bg-foreground-muted"
-                aria-label="Offline"
-                title="Offline"
+                className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background-surface ${
+                  astrologer.isOnline ? "bg-success" : "bg-foreground-muted"
+                }`}
+                aria-label={astrologer.isOnline ? "Online" : "Offline"}
+                title={astrologer.isOnline ? "Online" : "Offline"}
               />
             </div>
             <div className="min-w-0">

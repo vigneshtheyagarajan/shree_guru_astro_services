@@ -65,6 +65,7 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     "booking.modeInPerson": "In-person",
     "booking.modeChat": "Chat",
     "booking.modePhoneCall": "Phone call",
+    "booking.modeVideoCall": "Video call",
     "booking.confirmedMessage":
       "Your booking is confirmed! You'll get a notification before your session.",
     "booking.consultationMode": "Consultation mode",
@@ -130,6 +131,7 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     "booking.modeInPerson": "व्यक्तिगत रूप से",
     "booking.modeChat": "चैट",
     "booking.modePhoneCall": "फोन कॉल",
+    "booking.modeVideoCall": "वीडियो कॉल",
     "booking.confirmedMessage":
       "आपकी बुकिंग की पुष्टि हो गई है! आपके सत्र से पहले आपको एक सूचना मिलेगी।",
     "booking.consultationMode": "परामर्श मोड",
@@ -196,6 +198,7 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     "booking.modeInPerson": "நேரில்",
     "booking.modeChat": "அரட்டை",
     "booking.modePhoneCall": "தொலைபேசி அழைப்பு",
+    "booking.modeVideoCall": "வீடியோ அழைப்பு",
     "booking.confirmedMessage":
       "உங்கள் முன்பதிவு உறுதி செய்யப்பட்டது! உங்கள் அமர்வுக்கு முன் உங்களுக்கு அறிவிப்பு கிடைக்கும்.",
     "booking.consultationMode": "ஆலோசனை முறை",

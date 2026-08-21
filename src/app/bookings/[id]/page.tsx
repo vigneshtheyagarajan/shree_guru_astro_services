@@ -3,16 +3,20 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle, StarRating } from "@/components/ui";
 import { ChatPanel } from "@/components/booking/ChatPanel";
+import { VideoCallPanel } from "@/components/booking/VideoCallPanel";
 import { BookingStatusActions } from "@/components/booking/BookingStatusActions";
 import { ReviewForm } from "@/components/booking/ReviewForm";
 import { DisputeForm } from "@/components/booking/DisputeForm";
+import { PayWithWalletButton } from "@/components/booking/PayWithWalletButton";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { formatDateTimeLong } from "@/lib/dateFormat";
+import { getOrCreateWallet } from "@/lib/wallet";
 
 const MODE_LABELS: Record<string, string> = {
   IN_PERSON: "In-person",
   CHAT: "Chat",
   PHONE_CALL: "Phone call",
+  VIDEO_CALL: "Video call",
 };
 
 export default async function BookingDetailPage({
@@ -53,6 +57,13 @@ export default async function BookingDetailPage({
 
   const intakeSchema = booking.serviceOffering.service.intakeSchema as unknown as IntakeSchema;
   const intakeData = (booking.intakeSubmission?.data ?? {}) as Record<string, string>;
+
+  const wallet = isClientViewer ? await getOrCreateWallet(session.user.id) : null;
+  const canPayFromWallet =
+    isClientViewer &&
+    booking.status === "PAYMENT_LINK_SENT" &&
+    !!booking.paymentLink &&
+    (wallet?.balance ?? 0) >= booking.paymentLink.amount;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
@@ -106,6 +117,19 @@ export default async function BookingDetailPage({
             />
           )}
 
+          {booking.mode === "VIDEO_CALL" &&
+            (booking.dailyRoomUrl ? (
+              <VideoCallPanel
+                bookingId={booking.id}
+                windowStart={new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString()}
+                windowEnd={new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString()}
+              />
+            ) : (
+              <p className="text-sm text-danger">
+                We couldn&apos;t set up the video room for this session. Please contact support.
+              </p>
+            ))}
+
           {isAstrologerViewer && (booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS") && (
             <BookingStatusActions bookingId={booking.id} />
           )}
@@ -115,14 +139,17 @@ export default async function BookingDetailPage({
               <p className="text-foreground">
                 Payment of ₹{booking.paymentLink.amount} is due for this session.
               </p>
-              <a
-                href={booking.paymentLink.shortUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
-              >
-                Pay Now
-              </a>
+              <div className="flex shrink-0 items-center gap-2">
+                {canPayFromWallet && <PayWithWalletButton bookingId={booking.id} />}
+                <a
+                  href={booking.paymentLink.shortUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
+                >
+                  Pay Now
+                </a>
+              </div>
             </div>
           )}
 

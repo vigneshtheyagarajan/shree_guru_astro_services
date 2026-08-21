@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL"] as const;
+const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL", "VIDEO_CALL"] as const;
 type Mode = (typeof VALID_MODES)[number];
 
 export async function POST(request: Request) {
