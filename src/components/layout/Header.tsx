@@ -14,6 +14,12 @@ export async function Header() {
         </Link>
         {session?.user ? (
           <div className="flex items-center gap-3">
+            <Link
+              href="/astrologers"
+              className="text-sm text-foreground-muted hover:text-foreground"
+            >
+              Find an Astrologer
+            </Link>
             {session.user.role === "ASTROLOGER" && (
               <>
                 <Link
@@ -46,6 +52,12 @@ export async function Header() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
+            <Link
+              href="/astrologers"
+              className="text-sm text-foreground-muted hover:text-foreground"
+            >
+              Find an Astrologer
+            </Link>
             <Link href="/login">
               <Button variant="ghost" size="sm">
                 Log in
