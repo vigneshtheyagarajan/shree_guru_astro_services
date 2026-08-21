@@ -92,6 +92,15 @@ export default function SignupPage() {
               Log in
             </Link>
           </p>
+          <p className="text-center text-sm text-foreground-muted">
+            Are you an astrologer?{" "}
+            <Link
+              href="/apply-astrologer"
+              className="text-primary hover:text-primary-hover"
+            >
+              Apply here
+            </Link>
+          </p>
         </CardFooter>
       </form>
     </Card>
