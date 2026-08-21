@@ -1,0 +1,260 @@
+// Prisma schema for Shree Guru Astro Services
+// See plan: /Users/vigneshtheyagarajan/.claude/plans/i-want-to-build-piped-mountain.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CLIENT
+  ASTROLOGER
+  ADMIN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ConsultationMode {
+  IN_PERSON
+  CHAT
+  PHONE_CALL
+}
+
+enum ExceptionType {
+  BLOCKED
+  EXTRA_OPEN
+}
+
+enum SlotStatus {
+  OPEN
+  LOCKED
+  BOOKED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  PAYMENT_LINK_SENT
+  PAID
+  RATED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  SMS
+}
+
+enum NotificationEvent {
+  BOOKING_CONFIRMED
+  BOOKING_REMINDER
+  SESSION_STARTING
+  PAYMENT_LINK_SENT
+  PAYMENT_RECEIVED
+  REVIEW_REQUEST
+}
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?
+  passwordHash String?
+  role         UserRole
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  astrologerProfile AstrologerProfile?
+  bookingsAsClient  Booking[]          @relation("ClientBookings")
+  notifications     Notification[]
+  chatMessages      ChatMessage[]
+}
+
+model AstrologerProfile {
+  id              String         @id @default(cuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id])
+  bio             String?
+  photoUrl        String?
+  languages       String[]
+  experienceYears Int?
+  address         String?
+  approvalStatus  ApprovalStatus @default(PENDING)
+  ratingAvg       Float          @default(0)
+  ratingCount     Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  services               ServiceOffering[]
+  availabilities         AvailabilityRule[]
+  availabilityExceptions AvailabilityException[]
+  slots                  Slot[]
+  bookings               Booking[]
+}
+
+model Service {
+  id             String             @id @default(cuid())
+  slug           String             @unique
+  name           String
+  description    String
+  category       String
+  intakeSchema   Json
+  supportedModes ConsultationMode[]
+  isActive       Boolean            @default(true)
+  phase          Int                @default(1)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  offerings ServiceOffering[]
+}
+
+model ServiceOffering {
+  id              String             @id @default(cuid())
+  astrologerId    String
+  astrologer      AstrologerProfile  @relation(fields: [astrologerId], references: [id])
+  serviceId       String
+  service         Service            @relation(fields: [serviceId], references: [id])
+  pricePerSession Int
+  modes           ConsultationMode[]
+  durationMinutes Int                @default(30)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  bookings Booking[]
+
+  @@unique([astrologerId, serviceId])
+}
+
+model AvailabilityRule {
+  id                  String            @id @default(cuid())
+  astrologerId        String
+  astrologer          AstrologerProfile @relation(fields: [astrologerId], references: [id])
+  dayOfWeek           Int
+  startTime           String
+  endTime             String
+  slotDurationMinutes Int               @default(30)
+  createdAt           DateTime          @default(now())
+}
+
+model AvailabilityException {
+  id           String            @id @default(cuid())
+  astrologerId String
+  astrologer   AstrologerProfile @relation(fields: [astrologerId], references: [id])
+  date         DateTime
+  type         ExceptionType
+  startTime    String?
+  endTime      String?
+  createdAt    DateTime          @default(now())
+}
+
+model Slot {
+  id           String            @id @default(cuid())
+  astrologerId String
+  astrologer   AstrologerProfile @relation(fields: [astrologerId], references: [id])
+  startAt      DateTime
+  endAt        DateTime
+  status       SlotStatus        @default(OPEN)
+  createdAt    DateTime          @default(now())
+
+  booking Booking?
+
+  @@unique([astrologerId, startAt])
+}
+
+model Booking {
+  id                String            @id @default(cuid())
+  clientId          String
+  client            User              @relation("ClientBookings", fields: [clientId], references: [id])
+  astrologerId      String
+  astrologer        AstrologerProfile @relation(fields: [astrologerId], references: [id])
+  serviceOfferingId String
+  serviceOffering   ServiceOffering   @relation(fields: [serviceOfferingId], references: [id])
+  slotId            String            @unique
+  slot              Slot              @relation(fields: [slotId], references: [id])
+  mode              ConsultationMode
+  status            BookingStatus     @default(PENDING)
+  clientPhone       String?
+  addressRevealedAt DateTime?
+  createdAt         DateTime          @default(now())
+  confirmedAt       DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+
+  intakeSubmission IntakeSubmission?
+  chatMessages     ChatMessage[]
+  paymentLink      PaymentLink?
+  review           Review?
+}
+
+model IntakeSubmission {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  data        Json
+  attachments String[]
+  createdAt   DateTime @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  body      String
+  sentAt    DateTime @default(now())
+}
+
+model Notification {
+  id      String              @id @default(cuid())
+  userId  String
+  user    User                @relation(fields: [userId], references: [id])
+  event   NotificationEvent
+  channel NotificationChannel
+  payload Json
+  readAt  DateTime?
+  sentAt  DateTime            @default(now())
+}
+
+model PaymentLink {
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
+  booking        Booking       @relation(fields: [bookingId], references: [id])
+  razorpayLinkId String
+  shortUrl       String
+  amount         Int
+  status         PaymentStatus @default(CREATED)
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  bookingId    String   @unique
+  booking      Booking  @relation(fields: [bookingId], references: [id])
+  astrologerId String
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now())
+}
