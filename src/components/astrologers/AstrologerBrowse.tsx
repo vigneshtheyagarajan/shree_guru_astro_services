@@ -8,12 +8,14 @@ export function AstrologerBrowse({
   astrologers,
   categories,
   languages,
+  initialCategory = "",
 }: {
   astrologers: AstrologerCardData[];
   categories: string[];
   languages: string[];
+  initialCategory?: string;
 }) {
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(initialCategory);
   const [language, setLanguage] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");

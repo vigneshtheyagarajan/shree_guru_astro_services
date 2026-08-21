@@ -2,7 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { AstrologerBrowse } from "@/components/astrologers/AstrologerBrowse";
 import type { AstrologerCardData } from "@/components/astrologers/AstrologerCard";
 
-export default async function AstrologersPage() {
+export default async function AstrologersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category: initialCategory } = await searchParams;
+
   const profiles = await prisma.astrologerProfile.findMany({
     where: { approvalStatus: "APPROVED" },
     include: { user: true, services: { include: { service: true } } },
@@ -54,6 +60,9 @@ export default async function AstrologersPage() {
           astrologers={astrologers}
           categories={categories}
           languages={languages}
+          initialCategory={
+            initialCategory && categories.includes(initialCategory) ? initialCategory : ""
+          }
         />
       )}
     </main>
