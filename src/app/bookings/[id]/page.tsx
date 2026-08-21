@@ -109,7 +109,7 @@ export default async function BookingDetailPage({
           )}
 
           {isClientViewer && booking.status === "PAYMENT_LINK_SENT" && booking.paymentLink && (
-            <div className="flex items-center justify-between rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
               <p className="text-foreground">
                 Payment of ₹{booking.paymentLink.amount} is due for this session.
               </p>
@@ -117,7 +117,7 @@ export default async function BookingDetailPage({
                 href={booking.paymentLink.shortUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
+                className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
               >
                 Pay Now
               </a>

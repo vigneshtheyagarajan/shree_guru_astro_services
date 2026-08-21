@@ -36,9 +36,9 @@ export default async function AdminNotificationsPage() {
             const payload = notification.payload as { title?: string; message?: string };
             return (
               <Card key={notification.id}>
-                <CardContent className="flex items-center justify-between gap-4 py-3">
+                <CardContent className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="primary">{notification.event.replace(/_/g, " ")}</Badge>
                       <Badge variant="default">{notification.channel}</Badge>
                       {notification.readAt && <Badge variant="success">Read</Badge>}

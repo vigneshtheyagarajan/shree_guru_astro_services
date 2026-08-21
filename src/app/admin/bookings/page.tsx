@@ -66,7 +66,7 @@ export default async function AdminBookingsPage({
         <div className="flex flex-col gap-3">
           {bookings.map((booking) => (
             <Card key={booking.id}>
-              <CardContent className="flex items-center justify-between gap-4 py-4">
+              <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-foreground">
                     {booking.serviceOffering.service.name}

@@ -42,8 +42,8 @@ export default async function AdminAstrologersPage() {
       <div className="flex flex-col gap-4">
         {profiles.map((profile) => (
           <Card key={profile.id}>
-            <CardHeader className="flex flex-row items-start justify-between gap-4">
-              <div>
+            <CardHeader className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0 break-words">
                 <CardTitle>{profile.user.name}</CardTitle>
                 <p className="text-sm text-foreground-muted">{profile.user.email}</p>
                 {profile.user.phone && (

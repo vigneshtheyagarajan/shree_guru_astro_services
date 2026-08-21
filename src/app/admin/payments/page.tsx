@@ -65,7 +65,7 @@ export default async function AdminPaymentsPage() {
           <div className="flex flex-col gap-3">
             {missingLinkBookings.map((booking) => (
               <Card key={booking.id}>
-                <CardContent className="flex items-center justify-between gap-4 py-4">
+                <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">
                       {booking.serviceOffering.service.name} · ₹{booking.serviceOffering.pricePerSession}
@@ -90,14 +90,14 @@ export default async function AdminPaymentsPage() {
           <div className="flex flex-col gap-3">
             {paymentLinks.map((link) => (
               <Card key={link.id}>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle>{link.booking.serviceOffering.service.name}</CardTitle>
                   <Badge variant={PAYMENT_STATUS_VARIANT[link.status] ?? "warning"}>
                     {link.status}
                   </Badge>
                 </CardHeader>
-                <CardContent className="flex items-center justify-between text-sm">
-                  <div>
+                <CardContent className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <p className="text-foreground">
                       {link.booking.client.name} · {link.booking.astrologer.user.name}
                     </p>
@@ -109,7 +109,7 @@ export default async function AdminPaymentsPage() {
                     href={link.shortUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-hover"
+                    className="shrink-0 text-primary hover:text-primary-hover"
                   >
                     View link
                   </a>

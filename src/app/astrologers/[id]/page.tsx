@@ -78,7 +78,7 @@ export default async function AstrologerProfilePage({
           <div className="flex flex-col gap-4">
             {profile.services.map((offering) => (
               <Card key={offering.id}>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle>{offering.service.name}</CardTitle>
                   <span className="text-sm font-medium text-foreground">
                     ₹{offering.pricePerSession} / {offering.durationMinutes} min
