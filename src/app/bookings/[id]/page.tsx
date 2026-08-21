@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { ChatPanel } from "@/components/booking/ChatPanel";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 
 const MODE_LABELS: Record<string, string> = {
@@ -98,14 +99,12 @@ export default async function BookingDetailPage({
           )}
 
           {booking.mode === "CHAT" && (
-            <div className="flex items-center justify-between rounded-lg border border-border bg-background-elevated p-3 text-sm">
-              <p className="text-foreground-muted">
-                Chat opens 5 minutes before your scheduled time.
-              </p>
-              <Button size="sm" disabled title="Chat is coming soon">
-                Open Chat
-              </Button>
-            </div>
+            <ChatPanel
+              bookingId={booking.id}
+              windowStart={new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString()}
+              windowEnd={new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString()}
+              currentUserId={session.user.id}
+            />
           )}
         </CardContent>
       </Card>
