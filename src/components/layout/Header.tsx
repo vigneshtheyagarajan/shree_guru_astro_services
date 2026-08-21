@@ -14,6 +14,22 @@ export async function Header() {
         </Link>
         {session?.user ? (
           <div className="flex items-center gap-3">
+            {session.user.role === "ASTROLOGER" && (
+              <Link
+                href="/astrologer/dashboard"
+                className="text-sm text-foreground-muted hover:text-foreground"
+              >
+                Dashboard
+              </Link>
+            )}
+            {session.user.role === "ADMIN" && (
+              <Link
+                href="/admin/astrologers"
+                className="text-sm text-foreground-muted hover:text-foreground"
+              >
+                Admin
+              </Link>
+            )}
             <span className="text-sm text-foreground-muted">
               {session.user.name}
             </span>
