@@ -1,4 +1,4 @@
-export type IntakeFieldType = "date" | "time" | "text" | "textarea" | "select";
+export type IntakeFieldType = "date" | "time" | "text" | "textarea" | "select" | "photo";
 
 export interface IntakeField {
   key: string;

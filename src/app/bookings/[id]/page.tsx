@@ -158,7 +158,16 @@ export default async function BookingDetailPage({
               return (
                 <div key={field.key}>
                   <dt className="text-foreground-muted">{field.label}</dt>
-                  <dd className="text-foreground">{value}</dd>
+                  {field.type === "photo" ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- user-uploaded Cloudinary URL
+                    <img
+                      src={value}
+                      alt={field.label}
+                      className="mt-1 h-24 w-24 rounded-lg border border-border object-cover"
+                    />
+                  ) : (
+                    <dd className="text-foreground">{value}</dd>
+                  )}
                 </div>
               );
             })}

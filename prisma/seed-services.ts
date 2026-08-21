@@ -9,14 +9,16 @@ const birthDetails: IntakeSchema = [
   { key: "pob", label: "Place of Birth", type: "text", required: true },
 ];
 
-export const PHASE_1_SERVICES: {
+export interface SeedServiceDef {
   slug: string;
   name: string;
   description: string;
   category: string;
   intakeSchema: IntakeSchema;
   supportedModes: Array<"IN_PERSON" | "CHAT" | "PHONE_CALL">;
-}[] = [
+}
+
+export const PHASE_1_SERVICES: SeedServiceDef[] = [
   {
     slug: "vedic-astrology",
     name: "Vedic Astrology",

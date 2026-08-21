@@ -1,5 +1,6 @@
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { Input, Select, Textarea } from "@/components/ui";
+import { PhotoUploadField } from "@/components/forms/PhotoUploadField";
 
 export type IntakeValues = Record<string, string>;
 
@@ -21,6 +22,16 @@ export function IntakeFormRenderer({
         ) => onChange(field.key, event.target.value);
 
         switch (field.type) {
+          case "photo":
+            return (
+              <PhotoUploadField
+                key={field.key}
+                label={field.label}
+                required={field.required}
+                value={value}
+                onChange={(url) => onChange(field.key, url)}
+              />
+            );
           case "select":
             return (
               <Select

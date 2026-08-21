@@ -56,6 +56,11 @@ export async function POST(request: Request) {
     }
   }
 
+  const attachments = intakeSchema
+    .filter((field) => field.type === "photo")
+    .map((field) => intakeData[field.key])
+    .filter((value): value is string => !!value);
+
   if (mode === "PHONE_CALL" && !clientPhone) {
     return NextResponse.json(
       { error: "A phone number is required for phone-call bookings." },
@@ -93,7 +98,7 @@ export async function POST(request: Request) {
       });
 
       await tx.intakeSubmission.create({
-        data: { bookingId: created.id, data: intakeData, attachments: [] },
+        data: { bookingId: created.id, data: intakeData, attachments },
       });
 
       return created;
