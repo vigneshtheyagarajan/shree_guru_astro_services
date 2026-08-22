@@ -61,9 +61,41 @@ export default async function BookingDetailPage({
   const wallet = isClientViewer ? await getOrCreateWallet(session.user.id) : null;
   const canPayFromWallet =
     isClientViewer &&
-    booking.status === "PAYMENT_LINK_SENT" &&
-    !!booking.paymentLink &&
+    booking.paymentLink?.status === "CREATED" &&
     (wallet?.balance ?? 0) >= booking.paymentLink.amount;
+
+  // Chat/phone/video are paid upfront -- the session itself (chat window,
+  // video join, phone number reveal) is gated behind that payment. In-person
+  // is unaffected: it's still paid after the session via the banner below.
+  const isLiveMode = booking.mode !== "IN_PERSON";
+  const isPaidForLiveSession = !isLiveMode || booking.paymentLink?.status === "PAID";
+
+  const paymentPrompt = booking.paymentLink ? (
+    <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
+      <p className="text-foreground">
+        {isClientViewer
+          ? `Payment of ₹${booking.paymentLink.amount} is required before this session can start.`
+          : "Waiting for the client to complete payment before this session can start."}
+      </p>
+      {isClientViewer && (
+        <div className="flex flex-wrap items-center gap-2">
+          {canPayFromWallet && <PayWithWalletButton bookingId={booking.id} />}
+          <a
+            href={booking.paymentLink.shortUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
+          >
+            Pay Now
+          </a>
+        </div>
+      )}
+    </div>
+  ) : (
+    <p className="text-sm text-danger">
+      We couldn&apos;t set up payment for this session. Please contact support.
+    </p>
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
@@ -101,24 +133,32 @@ export default async function BookingDetailPage({
             </div>
           )}
 
-          {booking.mode === "PHONE_CALL" && (
-            <div className="rounded-lg border border-border bg-background-elevated p-3 text-sm">
-              <p className="text-foreground-muted">Phone number</p>
-              <p className="text-foreground">{booking.clientPhone}</p>
-            </div>
-          )}
+          {booking.mode === "PHONE_CALL" &&
+            (isPaidForLiveSession || isClientViewer ? (
+              <div className="rounded-lg border border-border bg-background-elevated p-3 text-sm">
+                <p className="text-foreground-muted">Phone number</p>
+                <p className="text-foreground">{booking.clientPhone}</p>
+              </div>
+            ) : (
+              paymentPrompt
+            ))}
 
-          {booking.mode === "CHAT" && (
-            <ChatPanel
-              bookingId={booking.id}
-              windowStart={new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString()}
-              windowEnd={new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString()}
-              currentUserId={session.user.id}
-            />
-          )}
+          {booking.mode === "CHAT" &&
+            (isPaidForLiveSession ? (
+              <ChatPanel
+                bookingId={booking.id}
+                windowStart={new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString()}
+                windowEnd={new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString()}
+                currentUserId={session.user.id}
+              />
+            ) : (
+              paymentPrompt
+            ))}
 
           {booking.mode === "VIDEO_CALL" &&
-            (booking.dailyRoomUrl ? (
+            (!isPaidForLiveSession ? (
+              paymentPrompt
+            ) : booking.dailyRoomUrl ? (
               <VideoCallPanel
                 bookingId={booking.id}
                 windowStart={new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString()}

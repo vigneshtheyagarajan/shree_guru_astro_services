@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { PayoutDetailsForm } from "@/components/astrologer/PayoutDetailsForm";
+import { getEffectiveCommissionPercent } from "@/lib/platformSettings";
 import { formatDateShort } from "@/lib/dateFormat";
 
 const PAYOUT_STATUS_VARIANT: Record<string, "warning" | "success" | "danger"> = {
@@ -29,18 +30,23 @@ export default async function AstrologerPayoutsPage() {
     redirect("/apply-astrologer");
   }
 
-  const payouts = await prisma.payout.findMany({
-    where: { astrologerId: profile.id },
-    include: { booking: { include: { serviceOffering: { include: { service: true } } } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [payouts, effectiveCommissionPercent] = await Promise.all([
+    prisma.payout.findMany({
+      where: { astrologerId: profile.id },
+      include: { booking: { include: { serviceOffering: { include: { service: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    getEffectiveCommissionPercent(profile.commissionPercent),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
       <header>
         <h1 className="text-2xl font-semibold text-foreground">Payouts</h1>
         <p className="text-sm text-foreground-muted">
-          Add your bank details so the admin can pay you out for completed sessions.
+          Add your bank details so the admin can pay you out for completed sessions. Your current
+          commission rate is <span className="text-foreground">{effectiveCommissionPercent}%</span>{" "}
+          — you receive the session price minus this on every payout.
         </p>
       </header>
 
@@ -68,10 +74,11 @@ export default async function AstrologerPayoutsPage() {
                 <CardContent className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">
-                      {payout.booking.serviceOffering.service.name} · ₹{payout.amount}
+                      {payout.booking.serviceOffering.service.name} · ₹
+                      {payout.booking.serviceOffering.pricePerSession} gross · ₹{payout.amount} payout
                     </p>
                     <p className="text-sm text-foreground-muted">
-                      {formatDateShort(payout.createdAt)}
+                      {payout.commissionPercent}% commission · {formatDateShort(payout.createdAt)}
                       {payout.status === "FAILED" && payout.failureReason
                         ? ` · ${payout.failureReason}`
                         : ""}

@@ -190,7 +190,9 @@ export function BookingFlow({
                 </div>
               </dl>
               <Badge variant="warning" className="w-fit">
-                {t("booking.paymentNotice")}
+                {mode === "IN_PERSON"
+                  ? t("booking.paymentNotice")
+                  : t("booking.paymentNoticeUpfront")}
               </Badge>
               {error && <p className="text-sm text-danger">{error}</p>}
               <div className="flex gap-3">
@@ -214,17 +216,20 @@ export function BookingFlow({
               )}
               {mode === "PHONE_CALL" && (
                 <p className="text-sm text-foreground-muted">
-                  The astrologer will call you at {clientPhone} at your scheduled time.
+                  Complete payment from your booking page, then the astrologer will call you
+                  at {clientPhone} at your scheduled time.
                 </p>
               )}
               {mode === "CHAT" && (
                 <p className="text-sm text-foreground-muted">
-                  Your chat will open at your scheduled time.
+                  Complete payment from your booking page to unlock the chat at your scheduled
+                  time.
                 </p>
               )}
               {mode === "VIDEO_CALL" && (
                 <p className="text-sm text-foreground-muted">
-                  Your video call will open at your scheduled time.
+                  Complete payment from your booking page to unlock the video call at your
+                  scheduled time.
                 </p>
               )}
             </div>

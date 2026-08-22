@@ -15,7 +15,7 @@ export async function POST(
   const { id } = await params;
   const booking = await prisma.booking.findUnique({
     where: { id },
-    include: { astrologer: true, slot: true },
+    include: { astrologer: true, slot: true, paymentLink: true },
   });
   if (!booking) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -28,6 +28,12 @@ export async function POST(
   }
   if (booking.mode !== "VIDEO_CALL" || !booking.dailyRoomName) {
     return NextResponse.json({ error: "This booking has no video room." }, { status: 400 });
+  }
+  if (booking.paymentLink?.status !== "PAID") {
+    return NextResponse.json(
+      { error: "Please complete payment before joining the video call." },
+      { status: 402 },
+    );
   }
 
   const windowStart = new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000);

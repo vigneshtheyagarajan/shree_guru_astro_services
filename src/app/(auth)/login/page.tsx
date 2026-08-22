@@ -13,6 +13,7 @@ import {
   CardTitle,
   Input,
 } from "@/components/ui";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -71,6 +72,12 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? "Logging in…" : "Log in"}
           </Button>
+          <div className="flex items-center gap-3 text-xs text-foreground-muted">
+            <span className="h-px flex-1 bg-border" />
+            or
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <GoogleSignInButton callbackUrl={searchParams.get("callbackUrl") ?? "/"} />
           <p className="text-center text-sm text-foreground-muted">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-primary hover:text-primary-hover">

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationService } from "@/lib/notifications/NotificationService";
+import { createUpfrontPaymentLinkForBooking } from "@/lib/payments/razorpay";
 import type { ServiceOffering } from "@/generated/prisma/client";
 
 class ChatNowError extends Error {}
@@ -8,11 +9,11 @@ async function createInstantBooking(clientId: string, offering: ServiceOffering)
   const startAt = new Date();
   const endAt = new Date(startAt.getTime() + offering.durationMinutes * 60 * 1000);
 
-  return prisma.$transaction(async (tx) => {
+  const booking = await prisma.$transaction(async (tx) => {
     const slot = await tx.slot.create({
       data: { astrologerId: offering.astrologerId, startAt, endAt, status: "BOOKED" },
     });
-    const booking = await tx.booking.create({
+    const created = await tx.booking.create({
       data: {
         clientId,
         astrologerId: offering.astrologerId,
@@ -25,10 +26,20 @@ async function createInstantBooking(clientId: string, offering: ServiceOffering)
       },
     });
     await tx.intakeSubmission.create({
-      data: { bookingId: booking.id, data: {}, attachments: [] },
+      data: { bookingId: created.id, data: {}, attachments: [] },
     });
-    return booking;
+    return created;
   });
+
+  // Chat is a live mode -- payment is required upfront, same as a
+  // scheduled chat/phone/video booking (see /api/bookings/route.ts).
+  try {
+    await createUpfrontPaymentLinkForBooking(booking.id);
+  } catch (error) {
+    console.error("Failed to create upfront payment link for instant booking", error);
+  }
+
+  return booking;
 }
 
 /**

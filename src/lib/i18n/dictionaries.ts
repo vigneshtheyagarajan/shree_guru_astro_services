@@ -59,6 +59,7 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     "booking.confirmBooking": "Confirm Booking",
     "booking.booking": "Booking…",
     "booking.paymentNotice": "Payment happens after your session, via a link we'll send you",
+    "booking.paymentNoticeUpfront": "Payment is required upfront, right after you confirm, before your session can start",
     "booking.mode": "Mode",
     "booking.price": "Price",
     "booking.slot": "Slot",
@@ -125,6 +126,8 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     "booking.confirmBooking": "बुकिंग की पुष्टि करें",
     "booking.booking": "बुक हो रहा है…",
     "booking.paymentNotice": "भुगतान आपके सत्र के बाद होता है, हम आपको एक लिंक भेजेंगे",
+    "booking.paymentNoticeUpfront":
+      "पुष्टि करने के तुरंत बाद अग्रिम भुगतान आवश्यक है, आपके सत्र शुरू होने से पहले",
     "booking.mode": "मोड",
     "booking.price": "मूल्य",
     "booking.slot": "स्लॉट",
@@ -192,6 +195,8 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     "booking.booking": "பதிவு செய்யப்படுகிறது…",
     "booking.paymentNotice":
       "உங்கள் அமர்வுக்குப் பிறகு கட்டணம் செலுத்தப்படும், நாங்கள் உங்களுக்கு ஒரு இணைப்பை அனுப்புவோம்",
+    "booking.paymentNoticeUpfront":
+      "உறுதிப்படுத்திய உடனேயே முன்பணம் தேவை, உங்கள் அமர்வு தொடங்குவதற்கு முன்பு",
     "booking.mode": "முறை",
     "booking.price": "விலை",
     "booking.slot": "நேரம்",

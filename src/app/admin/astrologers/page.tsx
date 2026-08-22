@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { AstrologerStatusActions } from "@/components/admin/AstrologerStatusActions";
+import { CommissionOverrideForm } from "@/components/admin/CommissionOverrideForm";
+import { getPlatformSettings } from "@/lib/platformSettings";
 
 const BADGE_VARIANT = {
   PENDING: "warning",
@@ -21,10 +23,13 @@ export default async function AdminAstrologersPage() {
     redirect("/");
   }
 
-  const profiles = await prisma.astrologerProfile.findMany({
-    include: { user: true },
-    orderBy: [{ approvalStatus: "asc" }, { createdAt: "desc" }],
-  });
+  const [profiles, platformSettings] = await Promise.all([
+    prisma.astrologerProfile.findMany({
+      include: { user: true },
+      orderBy: [{ approvalStatus: "asc" }, { createdAt: "desc" }],
+    }),
+    getPlatformSettings(),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-16">
@@ -73,6 +78,11 @@ export default async function AdminAstrologersPage() {
                   <dd className="text-foreground">{profile.bio || "—"}</dd>
                 </div>
               </dl>
+              <CommissionOverrideForm
+                astrologerId={profile.id}
+                initialCommissionPercent={profile.commissionPercent}
+                defaultCommissionPercent={platformSettings.defaultCommissionPercent}
+              />
               <AstrologerStatusActions
                 astrologerId={profile.id}
                 currentStatus={profile.approvalStatus}

@@ -37,6 +37,7 @@ export async function Header() {
       { href: "/admin/disputes", label: "Disputes" },
       { href: "/admin/moderation", label: "Moderation" },
       { href: "/admin/notifications", label: "Logs" },
+      { href: "/admin/settings", label: "Platform" },
     );
   }
   if (role) {

@@ -130,6 +130,10 @@ export async function payBookingFromWallet(bookingId: string, userId: string) {
     throw new WalletError("Insufficient wallet balance.");
   }
 
+  // See markBookingPaidFromPaymentLink in razorpay.ts for why this only
+  // advances booking.status for post-session (in-person) payments.
+  const isPostSessionPayment = booking.status === "COMPLETED";
+
   await prisma.$transaction([
     prisma.wallet.update({
       where: { id: wallet.id },
@@ -147,11 +151,13 @@ export async function payBookingFromWallet(bookingId: string, userId: string) {
       where: { id: booking.paymentLink.id },
       data: { status: "PAID", paidAt: new Date() },
     }),
-    prisma.booking.update({ where: { id: bookingId }, data: { status: "PAID" } }),
+    ...(isPostSessionPayment
+      ? [prisma.booking.update({ where: { id: bookingId }, data: { status: "PAID" } })]
+      : []),
   ]);
 
   const serviceName = booking.serviceOffering.service.name;
-  await Promise.all([
+  const notifications = [
     NotificationService.send(booking.clientId, "PAYMENT_RECEIVED", {
       title: "Payment received",
       message: `Thanks! Your payment for ${serviceName} was received.`,
@@ -162,12 +168,17 @@ export async function payBookingFromWallet(bookingId: string, userId: string) {
       message: `The client's payment for ${serviceName} was received.`,
       url: `/bookings/${booking.id}`,
     }),
-    NotificationService.send(booking.clientId, "REVIEW_REQUEST", {
-      title: "How was your session?",
-      message: `Leave a rating for your ${serviceName} session with ${booking.astrologer.user.name}.`,
-      url: `/bookings/${booking.id}`,
-    }),
-  ]);
+  ];
+  if (isPostSessionPayment) {
+    notifications.push(
+      NotificationService.send(booking.clientId, "REVIEW_REQUEST", {
+        title: "How was your session?",
+        message: `Leave a rating for your ${serviceName} session with ${booking.astrologer.user.name}.`,
+        url: `/bookings/${booking.id}`,
+      }),
+    );
+  }
+  await Promise.all(notifications);
 }
 
 export { WalletError };

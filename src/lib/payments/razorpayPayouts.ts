@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationService } from "@/lib/notifications/NotificationService";
+import { getEffectiveCommissionPercent } from "@/lib/platformSettings";
 import type { AstrologerProfile } from "@/generated/prisma/client";
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID as string;
@@ -89,7 +90,11 @@ export async function createPayoutForBooking(bookingId: string) {
     throw new Error("Astrologer hasn't added payout bank details yet");
   }
 
-  const amount = booking.serviceOffering.pricePerSession;
+  const grossAmount = booking.serviceOffering.pricePerSession;
+  const commissionPercent = await getEffectiveCommissionPercent(
+    booking.astrologer.commissionPercent,
+  );
+  const amount = Math.round(grossAmount * (1 - commissionPercent / 100));
 
   try {
     const { fundAccountId } = await ensureFundAccount(booking.astrologer);
@@ -110,6 +115,7 @@ export async function createPayoutForBooking(bookingId: string) {
         bookingId: booking.id,
         astrologerId: booking.astrologerId,
         amount,
+        commissionPercent,
         status: mapRazorpayPayoutStatus(payoutResponse.status),
         razorpayPayoutId: payoutResponse.id,
       },
@@ -129,6 +135,7 @@ export async function createPayoutForBooking(bookingId: string) {
         bookingId: booking.id,
         astrologerId: booking.astrologerId,
         amount,
+        commissionPercent,
         status: "FAILED",
         failureReason: error instanceof Error ? error.message : "Unknown error",
       },

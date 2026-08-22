@@ -6,6 +6,7 @@ import { NotificationService } from "@/lib/notifications/NotificationService";
 import { formatDateTimeLong } from "@/lib/dateFormat";
 import { pushBookingEvent } from "@/lib/integrations/googleCalendar";
 import { createRoomForBooking } from "@/lib/video/daily";
+import { createUpfrontPaymentLinkForBooking } from "@/lib/payments/razorpay";
 
 const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL", "VIDEO_CALL"] as const;
 
@@ -134,6 +135,14 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         console.error("Failed to create Daily.co video room", error);
+      }
+    }
+
+    if (mode !== "IN_PERSON") {
+      try {
+        await createUpfrontPaymentLinkForBooking(booking.id);
+      } catch (error) {
+        console.error("Failed to create upfront payment link", error);
       }
     }
 

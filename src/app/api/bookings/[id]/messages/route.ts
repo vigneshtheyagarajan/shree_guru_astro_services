@@ -6,7 +6,7 @@ import { pusherServer } from "@/lib/chat/pusher";
 async function getBookingForParticipant(bookingId: string, userId: string) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { astrologer: true, slot: true },
+    include: { astrologer: true, slot: true, paymentLink: true },
   });
   if (!booking) return null;
   const isParticipant = booking.clientId === userId || booking.astrologer.userId === userId;
@@ -54,6 +54,12 @@ export async function POST(
     return NextResponse.json(
       { error: "This booking isn't a chat consultation." },
       { status: 400 },
+    );
+  }
+  if (booking.paymentLink?.status !== "PAID") {
+    return NextResponse.json(
+      { error: "Please complete payment before you can start chatting." },
+      { status: 402 },
     );
   }
 

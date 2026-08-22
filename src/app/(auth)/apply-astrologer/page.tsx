@@ -14,9 +14,11 @@ import {
   Input,
   Textarea,
 } from "@/components/ui";
+import { PhotoUploadField } from "@/components/forms/PhotoUploadField";
 
 export default function ApplyAstrologerPage() {
   const router = useRouter();
+  const [step, setStep] = useState<"application" | "photo">("application");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +26,7 @@ export default function ApplyAstrologerPage() {
   const [bio, setBio] = useState("");
   const [languages, setLanguages] = useState("");
   const [experienceYears, setExperienceYears] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -61,8 +64,56 @@ export default function ApplyAstrologerPage() {
       return;
     }
 
+    // Signed in now, so the photo upload's Cloudinary signature request
+    // (auth-gated) can succeed -- continue the same flow into a photo step
+    // instead of redirecting straight to the dashboard.
+    setStep("photo");
+  }
+
+  async function handleFinishPhotoStep() {
+    setSubmitting(true);
+    if (photoUrl) {
+      await fetch("/api/astrologer/profile-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrl }),
+      });
+    }
+    setSubmitting(false);
     router.push("/astrologer/dashboard");
     router.refresh();
+  }
+
+  if (step === "photo") {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Add a photo</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <p className="text-sm text-foreground-muted">
+            A clear photo helps clients recognize and trust you. You can also add or change
+            this later.
+          </p>
+          <PhotoUploadField
+            label="Profile photo"
+            required={false}
+            value={photoUrl}
+            onChange={setPhotoUrl}
+          />
+        </CardContent>
+        <CardFooter className="flex-col items-stretch gap-3">
+          <Button
+            type="button"
+            className="w-full"
+            disabled={submitting}
+            onClick={handleFinishPhotoStep}
+          >
+            {submitting ? "Saving…" : photoUrl ? "Finish" : "Skip for now"}
+          </Button>
+        </CardFooter>
+      </Card>
+    );
   }
 
   return (

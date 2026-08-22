@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { CreatePayoutButton } from "@/components/admin/CreatePayoutButton";
 import { hasPayoutDetails } from "@/lib/payments/razorpayPayouts";
+import { getEffectiveCommissionPercent } from "@/lib/platformSettings";
 import { formatDateTimeShort } from "@/lib/dateFormat";
 
 const PAYOUT_STATUS_VARIANT: Record<string, "warning" | "success" | "danger"> = {
@@ -23,7 +24,7 @@ export default async function AdminPayoutsPage() {
     redirect("/");
   }
 
-  const [pendingBookings, payouts] = await Promise.all([
+  const [pendingBookingsRaw, payouts] = await Promise.all([
     prisma.booking.findMany({
       where: { status: { in: ["PAID", "RATED"] }, payout: null },
       include: {
@@ -43,6 +44,17 @@ export default async function AdminPayoutsPage() {
     }),
   ]);
 
+  const pendingBookings = await Promise.all(
+    pendingBookingsRaw.map(async (booking) => {
+      const commissionPercent = await getEffectiveCommissionPercent(
+        booking.astrologer.commissionPercent,
+      );
+      const gross = booking.serviceOffering.pricePerSession;
+      const net = Math.round(gross * (1 - commissionPercent / 100));
+      return { booking, commissionPercent, gross, net };
+    }),
+  );
+
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-16">
       <header>
@@ -58,14 +70,15 @@ export default async function AdminPayoutsPage() {
           <p className="text-sm text-foreground-muted">None. Everything is paid out.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {pendingBookings.map((booking) => {
+            {pendingBookings.map(({ booking, commissionPercent, gross, net }) => {
               const eligible = hasPayoutDetails(booking.astrologer);
               return (
                 <Card key={booking.id}>
                   <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="truncate font-medium text-foreground">
-                        {booking.serviceOffering.service.name} · ₹{booking.serviceOffering.pricePerSession}
+                        {booking.serviceOffering.service.name} · ₹{gross} gross · ₹{net} payout (
+                        {commissionPercent}% commission)
                       </p>
                       <p className="truncate text-sm text-foreground-muted">
                         {booking.astrologer.payoutAccountHolderName ?? "Astrologer"} · client{" "}
@@ -107,7 +120,8 @@ export default async function AdminPayoutsPage() {
                 <CardContent className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="text-foreground">
-                      {payout.astrologer.payoutAccountHolderName ?? "Astrologer"} · ₹{payout.amount}
+                      {payout.astrologer.payoutAccountHolderName ?? "Astrologer"} · ₹{payout.amount}{" "}
+                      payout ({payout.commissionPercent}% commission)
                     </p>
                     <p className="text-foreground-muted">
                       created {formatDateTimeShort(payout.createdAt)}
