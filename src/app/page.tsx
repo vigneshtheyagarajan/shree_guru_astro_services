@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { Badge, Button, Card, CardContent, StarRating } from "@/components/ui";
 import { AstrologerCard, type AstrologerCardData } from "@/components/astrologers/AstrologerCard";
@@ -65,6 +66,15 @@ export default async function HomePage() {
       <section className="bg-starfield relative overflow-hidden border-b border-border">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,122,26,0.16),_transparent_60%)]" />
         <div className="relative mx-auto flex w-full max-w-5xl flex-col items-start gap-6 px-6 py-20 sm:py-28">
+          <Image
+            src="/logo-mark.png"
+            alt=""
+            aria-hidden
+            width={600}
+            height={600}
+            priority
+            className="h-24 w-24 sm:h-28 sm:w-28"
+          />
           {approvedProfiles.length > 0 && (
             <Badge variant="primary">
               {approvedProfiles.length} verified astrologer

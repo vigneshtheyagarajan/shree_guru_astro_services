@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { Badge, Button } from "@/components/ui";
 import { SignOutButton } from "@/components/layout/SignOutButton";
@@ -47,8 +48,15 @@ export async function Header() {
   return (
     <header className="relative border-b border-border">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <Link href="/" className="shrink-0 text-sm font-semibold text-primary">
-          Shree Guru Astro Services
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/logo-header.png"
+            alt="Shree Guru Astro Services"
+            width={1200}
+            height={400}
+            priority
+            className="h-12 w-auto sm:h-14"
+          />
         </Link>
 
         {session?.user ? (
