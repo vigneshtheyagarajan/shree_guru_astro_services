@@ -27,7 +27,7 @@ export function CreatePaymentLinkButton({ bookingId }: { bookingId: string }) {
   return (
     <div className="flex flex-col items-end gap-1">
       <Button size="sm" disabled={isPending} onClick={handleClick}>
-        {isPending ? "Creating…" : "Create Payment Link"}
+        {isPending ? "Creating…" : "Set Up Payment"}
       </Button>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>

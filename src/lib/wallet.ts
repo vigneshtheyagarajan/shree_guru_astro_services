@@ -20,27 +20,22 @@ function bonusForAmount(amount: number) {
 }
 
 /**
- * Creates a Razorpay Payment Link for a wallet top-up. On payment, the
- * webhook credits the wallet (amount + any loyalty bonus for top-ups of
- * ₹1000+) via creditWalletFromTopUp.
+ * Creates a Razorpay Order for a wallet top-up. The client pays via an
+ * embedded Razorpay Checkout modal (see RazorpayCheckoutButton) and the
+ * wallet is credited (amount + any loyalty bonus for top-ups of ₹1000+) as
+ * soon as the client-side verification endpoint confirms the payment
+ * signature -- see creditWalletFromTopUp.
  */
 export async function createWalletTopUp(userId: string, amount: number) {
   const wallet = await getOrCreateWallet(userId);
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
   const bonusAmount = bonusForAmount(amount);
 
-  const link = await razorpay.paymentLink.create({
+  const order = await razorpay.orders.create({
     amount: amount * 100,
     currency: "INR",
-    accept_partial: false,
-    description: `Wallet top-up${bonusAmount ? ` (+₹${bonusAmount} bonus)` : ""}`,
-    customer: {
-      name: user.name,
-      email: user.email,
-      contact: user.phone ?? undefined,
-    },
-    notify: { sms: false, email: false },
-    reference_id: `wallet-${wallet.id}-${Date.now()}`,
+    receipt: `wallet-${wallet.id}-${Date.now()}`,
+    payment_capture: true,
+    notes: { walletId: wallet.id },
   });
 
   await prisma.walletTopUp.create({
@@ -48,23 +43,27 @@ export async function createWalletTopUp(userId: string, amount: number) {
       walletId: wallet.id,
       amount,
       bonusAmount,
-      razorpayLinkId: link.id,
-      shortUrl: link.short_url,
+      razorpayOrderId: order.id,
       status: "CREATED",
     },
   });
 
-  return link;
+  return order;
 }
 
 /**
  * Applies a paid wallet top-up: credits the base amount + loyalty bonus and
  * records both as WalletTransaction rows. Idempotent -- safe to call twice
- * for the same webhook event.
+ * for the same order (from the verification endpoint and the reconciliation
+ * cron alike). Accepts either a Razorpay Order ID (current embedded-Checkout
+ * flow) or a legacy Payment Link ID (any pre-existing rows from the old
+ * redirect flow).
  */
-export async function creditWalletFromTopUp(razorpayLinkId: string) {
+export async function creditWalletFromTopUp(razorpayIdentifier: string) {
   const topUp = await prisma.walletTopUp.findFirst({
-    where: { razorpayLinkId },
+    where: {
+      OR: [{ razorpayOrderId: razorpayIdentifier }, { razorpayLinkId: razorpayIdentifier }],
+    },
     include: { wallet: true },
   });
   if (!topUp) return { updated: false as const, reason: "top_up_not_found" as const };

@@ -15,10 +15,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const link = await createWalletTopUp(session.user.id, Math.trunc(amount));
-    return NextResponse.json({ ok: true, shortUrl: link.short_url });
+    const order = await createWalletTopUp(session.user.id, Math.trunc(amount));
+    return NextResponse.json({
+      ok: true,
+      orderId: order.id,
+      amount: Math.trunc(amount),
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+    });
   } catch (error) {
-    console.error("Failed to create wallet top-up payment link", error);
+    console.error("Failed to create wallet top-up order", error);
     return NextResponse.json({ error: "Failed to start the top-up. Please try again." }, { status: 502 });
   }
 }

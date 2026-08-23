@@ -106,12 +106,10 @@ export default async function AdminPaymentsPage() {
                     </p>
                   </div>
                   <a
-                    href={link.shortUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/bookings/${link.bookingId}`}
                     className="shrink-0 text-primary hover:text-primary-hover"
                   >
-                    View link
+                    View booking
                   </a>
                 </CardContent>
               </Card>

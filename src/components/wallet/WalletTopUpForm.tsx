@@ -2,20 +2,29 @@
 
 import { useState } from "react";
 import { Button, Input } from "@/components/ui";
+import { RazorpayCheckoutButton } from "@/components/payments/RazorpayCheckoutButton";
 
 const PRESET_AMOUNTS = [500, 1000, 2000];
 
-export function WalletTopUpForm() {
+export function WalletTopUpForm({
+  clientName,
+  clientEmail,
+}: {
+  clientName: string;
+  clientEmail: string;
+}) {
   const [amount, setAmount] = useState("1000");
   const [error, setError] = useState<string | null>(null);
-  const [link, setLink] = useState<string | null>(null);
+  const [order, setOrder] = useState<{ orderId: string; amount: number; razorpayKeyId: string } | null>(
+    null,
+  );
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
-    setLink(null);
+    setOrder(null);
 
     const response = await fetch("/api/wallet/top-up", {
       method: "POST",
@@ -29,7 +38,7 @@ export function WalletTopUpForm() {
       setError(body?.error ?? "Failed to start the top-up.");
       return;
     }
-    setLink(body.shortUrl);
+    setOrder({ orderId: body.orderId, amount: body.amount, razorpayKeyId: body.razorpayKeyId });
   }
 
   return (
@@ -61,19 +70,22 @@ export function WalletTopUpForm() {
         </p>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
-      {link && (
-        <a
-          href={link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-fit rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
-        >
-          Complete payment →
-        </a>
+      {order ? (
+        <RazorpayCheckoutButton
+          razorpayKeyId={order.razorpayKeyId}
+          orderId={order.orderId}
+          amount={order.amount}
+          description="Wallet top-up"
+          prefillName={clientName}
+          prefillEmail={clientEmail}
+          verifyUrl="/api/wallet/top-up/verify"
+          label={`Pay ₹${order.amount}`}
+        />
+      ) : (
+        <Button type="submit" size="sm" className="self-start" disabled={submitting}>
+          {submitting ? "Starting…" : "Top Up"}
+        </Button>
       )}
-      <Button type="submit" size="sm" className="self-start" disabled={submitting}>
-        {submitting ? "Starting…" : "Top Up"}
-      </Button>
     </form>
   );
 }

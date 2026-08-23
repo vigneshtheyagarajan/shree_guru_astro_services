@@ -363,15 +363,18 @@ model Notification {
 }
 
 model PaymentLink {
-  id             String        @id @default(cuid())
-  bookingId      String        @unique
-  booking        Booking       @relation(fields: [bookingId], references: [id])
-  razorpayLinkId String
-  shortUrl       String
-  amount         Int
-  status         PaymentStatus @default(CREATED)
-  createdAt      DateTime      @default(now())
-  paidAt         DateTime?
+  id              String        @id @default(cuid())
+  bookingId       String        @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+  // Legacy fields from the Payment Links (redirect) flow -- unused by new
+  // rows, which use razorpayOrderId + embedded Checkout instead.
+  razorpayLinkId  String?
+  shortUrl        String?
+  razorpayOrderId String?
+  amount          Int
+  status          PaymentStatus @default(CREATED)
+  createdAt       DateTime      @default(now())
+  paidAt          DateTime?
 }
 
 model Review {
@@ -463,14 +466,17 @@ model WalletTransaction {
 }
 
 model WalletTopUp {
-  id             String        @id @default(cuid())
-  walletId       String
-  wallet         Wallet        @relation(fields: [walletId], references: [id])
-  amount         Int
-  bonusAmount    Int           @default(0)
-  razorpayLinkId String
-  shortUrl       String
-  status         PaymentStatus @default(CREATED)
-  createdAt      DateTime      @default(now())
-  paidAt         DateTime?
+  id              String        @id @default(cuid())
+  walletId        String
+  wallet          Wallet        @relation(fields: [walletId], references: [id])
+  amount          Int
+  bonusAmount     Int           @default(0)
+  // Legacy fields from the Payment Links (redirect) flow -- unused by new
+  // rows, which use razorpayOrderId + embedded Checkout instead.
+  razorpayLinkId  String?
+  shortUrl        String?
+  razorpayOrderId String?
+  status          PaymentStatus @default(CREATED)
+  createdAt       DateTime      @default(now())
+  paidAt          DateTime?
 }

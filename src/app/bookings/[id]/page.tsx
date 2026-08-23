@@ -8,6 +8,7 @@ import { BookingStatusActions } from "@/components/booking/BookingStatusActions"
 import { ReviewForm } from "@/components/booking/ReviewForm";
 import { DisputeForm } from "@/components/booking/DisputeForm";
 import { PayWithWalletButton } from "@/components/booking/PayWithWalletButton";
+import { RazorpayCheckoutButton } from "@/components/payments/RazorpayCheckoutButton";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { formatDateTimeLong } from "@/lib/dateFormat";
 import { getOrCreateWallet } from "@/lib/wallet";
@@ -70,7 +71,9 @@ export default async function BookingDetailPage({
   const isLiveMode = booking.mode !== "IN_PERSON";
   const isPaidForLiveSession = !isLiveMode || booking.paymentLink?.status === "PAID";
 
-  const paymentPrompt = booking.paymentLink ? (
+  const razorpayKeyId = process.env.RAZORPAY_KEY_ID as string;
+
+  const paymentPrompt = booking.paymentLink?.razorpayOrderId ? (
     <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
       <p className="text-foreground">
         {isClientViewer
@@ -80,14 +83,15 @@ export default async function BookingDetailPage({
       {isClientViewer && (
         <div className="flex flex-wrap items-center gap-2">
           {canPayFromWallet && <PayWithWalletButton bookingId={booking.id} />}
-          <a
-            href={booking.paymentLink.shortUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
-          >
-            Pay Now
-          </a>
+          <RazorpayCheckoutButton
+            razorpayKeyId={razorpayKeyId}
+            orderId={booking.paymentLink.razorpayOrderId}
+            amount={booking.paymentLink.amount}
+            description={`${booking.serviceOffering.service.name} consultation`}
+            prefillName={booking.client.name}
+            prefillEmail={booking.client.email}
+            verifyUrl={`/api/bookings/${booking.id}/pay/verify`}
+          />
         </div>
       )}
     </div>
@@ -181,14 +185,17 @@ export default async function BookingDetailPage({
               </p>
               <div className="flex shrink-0 items-center gap-2">
                 {canPayFromWallet && <PayWithWalletButton bookingId={booking.id} />}
-                <a
-                  href={booking.paymentLink.shortUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-black hover:bg-primary-hover"
-                >
-                  Pay Now
-                </a>
+                {booking.paymentLink.razorpayOrderId && (
+                  <RazorpayCheckoutButton
+                    razorpayKeyId={razorpayKeyId}
+                    orderId={booking.paymentLink.razorpayOrderId}
+                    amount={booking.paymentLink.amount}
+                    description={`${booking.serviceOffering.service.name} consultation`}
+                    prefillName={booking.client.name}
+                    prefillEmail={booking.client.email}
+                    verifyUrl={`/api/bookings/${booking.id}/pay/verify`}
+                  />
+                )}
               </div>
             </div>
           )}

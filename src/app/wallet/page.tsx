@@ -41,7 +41,7 @@ export default async function WalletPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="text-3xl font-semibold text-foreground">₹{wallet.balance}</p>
-          <WalletTopUpForm />
+          <WalletTopUpForm clientName={session.user.name ?? ""} clientEmail={session.user.email ?? ""} />
         </CardContent>
       </Card>
 

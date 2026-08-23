@@ -1,35 +1,56 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { razorpay, markBookingPaidFromPaymentLink } from "@/lib/payments/razorpay";
+import { creditWalletFromTopUp } from "@/lib/wallet";
 
-// Intended to run nightly (e.g. via Vercel Cron) as a safety net for missed
-// Razorpay webhooks: cross-checks any payment links still CREATED against
-// Razorpay's own status API and applies the PAID transition if needed.
+// Intended to run every few minutes (see .github/workflows/frequent-crons.yml)
+// as a safety net for the embedded-Checkout flow: if a client's browser
+// closes or a network drop happens right after paying -- before the
+// client-side verification call reaches our server -- this cross-checks any
+// still-CREATED orders against Razorpay's own status API and applies the
+// PAID transition. Also the primary path for accounts where Razorpay
+// webhooks aren't configured.
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const pendingLinks = await prisma.paymentLink.findMany({
-    where: { status: "CREATED" },
-  });
-
   let checked = 0;
   let reconciled = 0;
   let failed = 0;
 
-  for (const link of pendingLinks) {
+  const pendingBookingPayments = await prisma.paymentLink.findMany({
+    where: { status: "CREATED", razorpayOrderId: { not: null } },
+  });
+  for (const payment of pendingBookingPayments) {
     checked += 1;
     try {
-      const remote = await razorpay.paymentLink.fetch(link.razorpayLinkId);
-      if (remote.status === "paid") {
-        const result = await markBookingPaidFromPaymentLink(link.razorpayLinkId);
+      const order = await razorpay.orders.fetch(payment.razorpayOrderId as string);
+      if (order.status === "paid") {
+        const result = await markBookingPaidFromPaymentLink(payment.razorpayOrderId as string);
         if (result.updated) reconciled += 1;
       }
     } catch (error) {
       failed += 1;
-      console.error(`Failed to reconcile payment link ${link.razorpayLinkId}`, error);
+      console.error(`Failed to reconcile order ${payment.razorpayOrderId}`, error);
+    }
+  }
+
+  const pendingTopUps = await prisma.walletTopUp.findMany({
+    where: { status: "CREATED", razorpayOrderId: { not: null } },
+  });
+  for (const topUp of pendingTopUps) {
+    checked += 1;
+    try {
+      const order = await razorpay.orders.fetch(topUp.razorpayOrderId as string);
+      if (order.status === "paid") {
+        const result = await creditWalletFromTopUp(topUp.razorpayOrderId as string);
+        if (result.updated) reconciled += 1;
+      }
+    } catch (error) {
+      failed += 1;
+      console.error(`Failed to reconcile wallet top-up order ${topUp.razorpayOrderId}`, error);
     }
   }
 

@@ -19,6 +19,22 @@ export async function POST(request: Request) {
 
   const event = JSON.parse(rawBody);
 
+  // Current flow: embedded Checkout against a Razorpay Order. Payment is
+  // primarily confirmed client-side (see /api/bookings/[id]/pay/verify and
+  // /api/wallet/top-up/verify) with the reconciliation cron as a backstop,
+  // so this webhook is a third, optional layer -- harmless if never
+  // configured, useful the moment it is.
+  if (event.event === "payment.captured") {
+    const orderId = event.payload?.payment?.entity?.order_id;
+    if (orderId) {
+      const result = await markBookingPaidFromPaymentLink(orderId);
+      if (!result.updated && result.reason === "payment_link_not_found") {
+        await creditWalletFromTopUp(orderId);
+      }
+    }
+  }
+
+  // Legacy: Payment Links (redirect flow), kept for any pre-existing rows.
   if (event.event === "payment_link.paid") {
     const razorpayLinkId = event.payload?.payment_link?.entity?.id;
     if (razorpayLinkId) {
