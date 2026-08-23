@@ -22,6 +22,10 @@ export async function GET() {
       cloudinary: isConfigured(process.env.CLOUDINARY_CLOUD_NAME),
       pusher: isConfigured(process.env.PUSHER_APP_ID),
       razorpay: isConfigured(process.env.RAZORPAY_KEY_ID),
+      razorpayx: isConfigured(process.env.RAZORPAYX_ACCOUNT_NUMBER),
+      twilio: isConfigured(process.env.TWILIO_ACCOUNT_SID),
+      google: isConfigured(process.env.GOOGLE_CLIENT_ID),
+      daily: isConfigured(process.env.DAILY_API_KEY),
     },
   });
 }
