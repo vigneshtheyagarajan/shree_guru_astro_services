@@ -1,6 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/materialize-slots", "schedule": "0 18 * * *" },
-    { "path": "/api/cron/reconcile-payments", "schedule": "30 18 * * *" }
+    { "path": "/api/cron/materialize-slots", "schedule": "0 18 * * *" }
   ]
 }
