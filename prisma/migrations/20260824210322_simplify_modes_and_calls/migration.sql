@@ -10,11 +10,38 @@ ALTER TABLE "Booking" ALTER COLUMN "status" SET DEFAULT 'PENDING';
 COMMIT;
 
 -- AlterEnum
+-- Old rows (seed data predating this migration) can still hold IN_PERSON /
+-- PHONE_CALL / VIDEO_CALL, which no longer exist as enum values. Rather than
+-- a naive text cast (which fails on those values), map them forward instead
+-- of dropping the migration: PHONE_CALL and VIDEO_CALL both become CALL
+-- (the new in-app calling mode), IN_PERSON has no replacement and is
+-- dropped from any array it appears in.
+-- Note: ALTER COLUMN ... USING may not contain a subquery (Postgres
+-- restriction on table-rewriting type changes), so the array columns are
+-- remapped with array_replace/array_remove instead of a SELECT/unnest.
 BEGIN;
 CREATE TYPE "ConsultationMode_new" AS ENUM ('CHAT', 'CALL');
-ALTER TABLE "Service" ALTER COLUMN "supportedModes" TYPE "ConsultationMode_new"[] USING ("supportedModes"::text::"ConsultationMode_new"[]);
-ALTER TABLE "ServiceOffering" ALTER COLUMN "modes" TYPE "ConsultationMode_new"[] USING ("modes"::text::"ConsultationMode_new"[]);
-ALTER TABLE "Booking" ALTER COLUMN "mode" TYPE "ConsultationMode_new" USING ("mode"::text::"ConsultationMode_new");
+ALTER TABLE "Service" ALTER COLUMN "supportedModes" TYPE "ConsultationMode_new"[] USING (
+  array_remove(
+    array_replace(
+      array_replace("supportedModes"::text[], 'PHONE_CALL', 'CALL'),
+      'VIDEO_CALL', 'CALL'
+    ),
+    'IN_PERSON'
+  )::"ConsultationMode_new"[]
+);
+ALTER TABLE "ServiceOffering" ALTER COLUMN "modes" TYPE "ConsultationMode_new"[] USING (
+  array_remove(
+    array_replace(
+      array_replace("modes"::text[], 'PHONE_CALL', 'CALL'),
+      'VIDEO_CALL', 'CALL'
+    ),
+    'IN_PERSON'
+  )::"ConsultationMode_new"[]
+);
+ALTER TABLE "Booking" ALTER COLUMN "mode" TYPE "ConsultationMode_new" USING (
+  (CASE "mode"::text WHEN 'PHONE_CALL' THEN 'CALL' WHEN 'VIDEO_CALL' THEN 'CALL' ELSE "mode"::text END)::"ConsultationMode_new"
+);
 ALTER TYPE "ConsultationMode" RENAME TO "ConsultationMode_old";
 ALTER TYPE "ConsultationMode_new" RENAME TO "ConsultationMode";
 DROP TYPE "public"."ConsultationMode_old";
