@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const COMPLETED_STATUSES = ["COMPLETED", "PAYMENT_LINK_SENT", "PAID", "RATED"] as const;
+const COMPLETED_STATUSES = ["PAID", "RATED"] as const;
 
 /**
  * Content-based recommendations: infers a client's preferred categories and

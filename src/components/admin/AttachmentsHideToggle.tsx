@@ -26,7 +26,7 @@ export function AttachmentsHideToggle({
   }
 
   return (
-    <Button size="sm" variant={hidden ? "primary" : "secondary"} disabled={isPending} onClick={toggle}>
+    <Button size="sm" variant={hidden ? "primary" : "secondary"} loading={isPending} onClick={toggle}>
       {hidden ? "Unhide" : "Hide"}
     </Button>
   );

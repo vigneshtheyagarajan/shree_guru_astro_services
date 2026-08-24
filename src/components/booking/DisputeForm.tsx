@@ -68,8 +68,8 @@ export function DisputeForm({ bookingId }: { bookingId: string }) {
       />
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={submitting}>
-          {submitting ? "Submitting…" : "Submit Dispute"}
+        <Button type="submit" size="sm" loading={submitting}>
+          Submit Dispute
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
           Cancel

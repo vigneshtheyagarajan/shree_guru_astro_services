@@ -46,8 +46,8 @@ export function ReviewForm({ bookingId }: { bookingId: string }) {
         onChange={(event) => setComment(event.target.value)}
       />
       {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="submit" size="sm" className="self-start" disabled={submitting}>
-        {submitting ? "Submitting…" : "Submit Review"}
+      <Button type="submit" size="sm" className="self-start" loading={submitting}>
+        Submit Review
       </Button>
     </form>
   );

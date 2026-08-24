@@ -54,8 +54,8 @@ export function PlatformSettingsForm({
       </p>
       {error && <p className="text-sm text-danger">{error}</p>}
       {success && <p className="text-sm text-success">Saved.</p>}
-      <Button type="submit" size="sm" className="self-start" disabled={submitting}>
-        {submitting ? "Saving…" : "Save"}
+      <Button type="submit" size="sm" className="self-start" loading={submitting}>
+        Save
       </Button>
     </form>
   );

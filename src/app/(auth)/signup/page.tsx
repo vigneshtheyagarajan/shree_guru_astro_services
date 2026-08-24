@@ -84,8 +84,8 @@ export default function SignupPage() {
           {error && <p className="text-sm text-danger">{error}</p>}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-3">
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Creating account…" : "Sign up"}
+          <Button type="submit" className="w-full" loading={submitting}>
+            Sign up
           </Button>
           <div className="flex items-center gap-3 text-xs text-foreground-muted">
             <span className="h-px flex-1 bg-border" />

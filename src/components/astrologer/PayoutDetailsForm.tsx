@@ -64,8 +64,8 @@ export function PayoutDetailsForm({
       />
       {error && <p className="text-sm text-danger">{error}</p>}
       {success && <p className="text-sm text-success">Payout details saved.</p>}
-      <Button type="submit" className="self-start" disabled={submitting}>
-        {submitting ? "Saving…" : "Save Payout Details"}
+      <Button type="submit" className="self-start" loading={submitting}>
+        Save Payout Details
       </Button>
     </form>
   );

@@ -77,8 +77,8 @@ export function ChatNowButton({ serviceOfferingId }: { serviceOfferingId: string
 
   return (
     <div className="flex flex-col gap-1">
-      <Button size="sm" onClick={handleClick} disabled={state.kind === "requesting"}>
-        {state.kind === "requesting" ? "Connecting…" : "Chat Now"}
+      <Button size="sm" onClick={handleClick} loading={state.kind === "requesting"}>
+        Chat Now
       </Button>
       {state.kind === "error" && <p className="text-xs text-danger">{state.message}</p>}
     </div>

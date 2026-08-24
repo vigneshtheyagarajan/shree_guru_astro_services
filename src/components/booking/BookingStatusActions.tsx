@@ -25,13 +25,13 @@ export function BookingStatusActions({ bookingId }: { bookingId: string }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
-        <Button size="sm" disabled={isPending} onClick={() => updateStatus("complete")}>
+        <Button size="sm" loading={isPending} onClick={() => updateStatus("complete")}>
           Mark Complete
         </Button>
         <Button
           size="sm"
           variant="secondary"
-          disabled={isPending}
+          loading={isPending}
           onClick={() => updateStatus("no-show")}
         >
           Mark No-show

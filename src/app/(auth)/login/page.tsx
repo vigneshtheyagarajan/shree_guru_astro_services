@@ -69,8 +69,8 @@ export default function LoginPage() {
           {error && <p className="text-sm text-danger">{error}</p>}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-3">
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Logging in…" : "Log in"}
+          <Button type="submit" className="w-full" loading={submitting}>
+            Log in
           </Button>
           <div className="flex items-center gap-3 text-xs text-foreground-muted">
             <span className="h-px flex-1 bg-border" />

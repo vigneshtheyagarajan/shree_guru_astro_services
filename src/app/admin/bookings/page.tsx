@@ -11,8 +11,6 @@ const VALID_STATUSES: BookingStatus[] = [
   "PENDING",
   "CONFIRMED",
   "IN_PROGRESS",
-  "COMPLETED",
-  "PAYMENT_LINK_SENT",
   "PAID",
   "RATED",
   "CANCELLED",

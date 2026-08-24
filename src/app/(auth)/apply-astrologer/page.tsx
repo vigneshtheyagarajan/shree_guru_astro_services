@@ -106,10 +106,10 @@ export default function ApplyAstrologerPage() {
           <Button
             type="button"
             className="w-full"
-            disabled={submitting}
+            loading={submitting}
             onClick={handleFinishPhotoStep}
           >
-            {submitting ? "Saving…" : photoUrl ? "Finish" : "Skip for now"}
+            {photoUrl ? "Finish" : "Skip for now"}
           </Button>
         </CardFooter>
       </Card>
@@ -174,8 +174,8 @@ export default function ApplyAstrologerPage() {
           {error && <p className="text-sm text-danger">{error}</p>}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-3">
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Submitting…" : "Submit application"}
+          <Button type="submit" className="w-full" loading={submitting}>
+            Submit application
           </Button>
           <p className="text-center text-sm text-foreground-muted">
             Looking to book a consultation instead?{" "}

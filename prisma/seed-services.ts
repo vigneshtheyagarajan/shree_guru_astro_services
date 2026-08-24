@@ -15,7 +15,7 @@ export interface SeedServiceDef {
   description: string;
   category: string;
   intakeSchema: IntakeSchema;
-  supportedModes: Array<"IN_PERSON" | "CHAT" | "PHONE_CALL" | "VIDEO_CALL">;
+  supportedModes: Array<"CHAT" | "CALL">;
 }
 
 export const PHASE_1_SERVICES: SeedServiceDef[] = [
@@ -26,7 +26,7 @@ export const PHASE_1_SERVICES: SeedServiceDef[] = [
       "Traditional Kundli/Janam Kundli reading based on your exact birth details.",
     category: "Vedic Astrology",
     intakeSchema: birthDetails,
-    supportedModes: ["IN_PERSON", "CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "jaamakol",
@@ -44,7 +44,7 @@ export const PHASE_1_SERVICES: SeedServiceDef[] = [
       },
       { key: "question", label: "Your Question", type: "textarea", required: false },
     ],
-    supportedModes: ["IN_PERSON", "CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "tarot-reading",
@@ -61,7 +61,7 @@ export const PHASE_1_SERVICES: SeedServiceDef[] = [
       },
       { key: "question", label: "Your Question", type: "textarea", required: true },
     ],
-    supportedModes: ["CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "numerology",
@@ -72,7 +72,7 @@ export const PHASE_1_SERVICES: SeedServiceDef[] = [
       { key: "fullName", label: "Full Name", type: "text", required: true },
       { key: "dob", label: "Date of Birth", type: "date", required: true },
     ],
-    supportedModes: ["CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "kundli-milan",
@@ -89,7 +89,7 @@ export const PHASE_1_SERVICES: SeedServiceDef[] = [
       { key: "partnerBTob", label: "Partner B - Time of Birth", type: "time", required: true },
       { key: "partnerBPob", label: "Partner B - Place of Birth", type: "text", required: true },
     ],
-    supportedModes: ["IN_PERSON", "CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "western-astrology",
@@ -101,6 +101,6 @@ export const PHASE_1_SERVICES: SeedServiceDef[] = [
       { key: "tob", label: "Time of Birth", type: "time", required: false },
       { key: "pob", label: "Place of Birth", type: "text", required: true },
     ],
-    supportedModes: ["CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
 ];

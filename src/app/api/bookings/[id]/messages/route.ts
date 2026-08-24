@@ -23,7 +23,10 @@ export async function GET(
   }
 
   const { id } = await params;
-  const booking = await getBookingForParticipant(id, session.user.id);
+  const booking =
+    session.user.role === "ADMIN"
+      ? await prisma.booking.findUnique({ where: { id } })
+      : await getBookingForParticipant(id, session.user.id);
   if (!booking) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

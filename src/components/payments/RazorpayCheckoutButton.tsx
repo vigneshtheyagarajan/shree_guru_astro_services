@@ -108,8 +108,8 @@ export function RazorpayCheckoutButton({
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <Button size="sm" onClick={handleClick} disabled={status !== "idle"}>
-        {status === "loading" ? "Opening…" : status === "verifying" ? "Confirming…" : label}
+      <Button size="sm" onClick={handleClick} loading={status !== "idle"}>
+        {status === "verifying" ? "Confirming…" : label}
       </Button>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>

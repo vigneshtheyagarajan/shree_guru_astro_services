@@ -4,13 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Checkbox, Input } from "@/components/ui";
 
-type Mode = "IN_PERSON" | "CHAT" | "PHONE_CALL" | "VIDEO_CALL";
+type Mode = "CHAT" | "CALL";
 
 const MODE_LABELS: Record<Mode, string> = {
-  IN_PERSON: "In-person",
   CHAT: "Chat",
-  PHONE_CALL: "Phone call",
-  VIDEO_CALL: "Video call",
+  CALL: "Call",
 };
 
 export function ServiceOfferingForm({
@@ -102,8 +100,8 @@ export function ServiceOfferingForm({
         </div>
       </div>
       {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="submit" size="sm" className="self-start" disabled={submitting}>
-        {submitting ? "Saving…" : existingOffering ? "Update" : "Start offering"}
+      <Button type="submit" size="sm" className="self-start" loading={submitting}>
+        {existingOffering ? "Update" : "Start offering"}
       </Button>
     </form>
   );

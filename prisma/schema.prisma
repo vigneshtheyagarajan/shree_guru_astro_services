@@ -24,10 +24,8 @@ enum ApprovalStatus {
 }
 
 enum ConsultationMode {
-  IN_PERSON
   CHAT
-  PHONE_CALL
-  VIDEO_CALL
+  CALL
 }
 
 enum QueueStatus {
@@ -64,8 +62,6 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   IN_PROGRESS
-  COMPLETED
-  PAYMENT_LINK_SENT
   PAID
   RATED
   CANCELLED
@@ -133,6 +129,7 @@ model User {
   bookingsAsClient  Booking[]          @relation("ClientBookings")
   notifications     Notification[]
   chatMessages      ChatMessage[]
+  callRecordings    CallRecording[]
   disputesRaised    Dispute[]
   chatQueueEntries  ChatQueueEntry[]
   wallet            Wallet?
@@ -187,7 +184,6 @@ model AstrologerProfile {
   photoUrl        String?
   languages       String[]
   experienceYears Int?
-  address         String?
   approvalStatus  ApprovalStatus @default(PENDING)
   ratingAvg       Float          @default(0)
   ratingCount     Int            @default(0)
@@ -305,8 +301,6 @@ model Booking {
   slot              Slot              @relation(fields: [slotId], references: [id])
   mode              ConsultationMode
   status            BookingStatus     @default(PENDING)
-  clientPhone       String?
-  addressRevealedAt DateTime?
   createdAt         DateTime          @default(now())
   confirmedAt       DateTime?
   completedAt       DateTime?
@@ -318,12 +312,11 @@ model Booking {
 
   googleEventId String?
 
-  dailyRoomUrl  String?
-  dailyRoomName String?
-  isInstant     Boolean @default(false)
+  isInstant Boolean @default(false)
 
   intakeSubmission IntakeSubmission?
   chatMessages     ChatMessage[]
+  callRecordings   CallRecording[]
   paymentLink      PaymentLink?
   review           Review?
   payout           Payout?
@@ -349,6 +342,21 @@ model ChatMessage {
   sender    User     @relation(fields: [senderId], references: [id])
   body      String
   sentAt    DateTime @default(now())
+}
+
+// One row per participant recording of an in-app CALL. Recorded
+// client-side (mixed local+remote audio) and uploaded to Cloudinary after
+// hangup so admin can review call sessions -- see CallPanel.tsx. Multiple
+// rows per booking are expected (each participant records independently).
+model CallRecording {
+  id              String   @id @default(cuid())
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+  uploadedById    String
+  uploadedBy      User     @relation(fields: [uploadedById], references: [id])
+  cloudinaryUrl   String
+  durationSeconds Int?
+  createdAt       DateTime @default(now())
 }
 
 model Notification {

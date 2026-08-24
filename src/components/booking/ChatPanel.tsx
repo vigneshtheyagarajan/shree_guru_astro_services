@@ -18,11 +18,13 @@ export function ChatPanel({
   windowStart,
   windowEnd,
   currentUserId,
+  readOnly = false,
 }: {
   bookingId: string;
   windowStart: string;
   windowEnd: string;
   currentUserId: string;
+  readOnly?: boolean;
 }) {
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [draft, setDraft] = useState("");
@@ -45,6 +47,7 @@ export function ChatPanel({
   }, [bookingId]);
 
   useEffect(() => {
+    if (readOnly) return;
     const pusher = getPusherClient();
     const channelName = `private-booking-${bookingId}`;
     const channel = pusher.subscribe(channelName);
@@ -57,7 +60,7 @@ export function ChatPanel({
       channel.unbind_all();
       pusher.unsubscribe(channelName);
     };
-  }, [bookingId]);
+  }, [bookingId, readOnly]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -93,7 +96,7 @@ export function ChatPanel({
     setDraft("");
   }
 
-  if (!isOpen && now < new Date(windowStart)) {
+  if (!readOnly && !isOpen && now < new Date(windowStart)) {
     return (
       <div className="rounded-lg border border-border bg-background-elevated p-3 text-sm text-foreground-muted">
         Chat opens at {formatDateTimeShort(windowStart)}.
@@ -103,7 +106,12 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      {!isOpen && <p className="text-sm text-foreground-muted">This chat session has ended.</p>}
+      {readOnly && (
+        <p className="text-sm text-foreground-muted">
+          Admin view — full chat transcript for this booking.
+        </p>
+      )}
+      {!readOnly && !isOpen && <p className="text-sm text-foreground-muted">This chat session has ended.</p>}
       <div
         ref={scrollRef}
         className="flex max-h-80 flex-col gap-2 overflow-y-auto rounded-lg border border-border bg-background-elevated p-3"
@@ -133,7 +141,7 @@ export function ChatPanel({
           );
         })}
       </div>
-      {isOpen && (
+      {!readOnly && isOpen && (
         <form onSubmit={handleSend} className="flex gap-2">
           <input
             type="text"
@@ -142,7 +150,7 @@ export function ChatPanel({
             placeholder="Type a message…"
             className="flex-1 rounded-lg border border-border bg-background-elevated px-3 py-2 text-sm text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <Button type="submit" size="sm" disabled={sending || !draft.trim()}>
+          <Button type="submit" size="sm" loading={sending} disabled={!draft.trim()}>
             Send
           </Button>
         </form>

@@ -25,7 +25,6 @@ export async function GET() {
       razorpayx: isConfigured(process.env.RAZORPAYX_ACCOUNT_NUMBER),
       twilio: isConfigured(process.env.TWILIO_ACCOUNT_SID),
       google: isConfigured(process.env.GOOGLE_CLIENT_ID),
-      daily: isConfigured(process.env.DAILY_API_KEY),
     },
   });
 }

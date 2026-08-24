@@ -24,8 +24,8 @@ export function PayWithWalletButton({ bookingId }: { bookingId: string }) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button size="sm" variant="secondary" disabled={pending} onClick={handleClick}>
-        {pending ? "Paying…" : "Pay from Wallet"}
+      <Button size="sm" variant="secondary" loading={pending} onClick={handleClick}>
+        Pay from Wallet
       </Button>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>

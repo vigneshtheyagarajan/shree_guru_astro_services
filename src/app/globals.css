@@ -57,6 +57,15 @@ body {
   color: transparent;
 }
 
+@keyframes route-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
 .bg-starfield {
   background-image:
     radial-gradient(1.5px 1.5px at 10% 20%, rgba(245, 245, 244, 0.5), transparent),

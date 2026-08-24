@@ -82,8 +82,8 @@ export function WalletTopUpForm({
           label={`Pay ₹${order.amount}`}
         />
       ) : (
-        <Button type="submit" size="sm" className="self-start" disabled={submitting}>
-          {submitting ? "Starting…" : "Top Up"}
+        <Button type="submit" size="sm" className="self-start" loading={submitting}>
+          Top Up
         </Button>
       )}
     </form>

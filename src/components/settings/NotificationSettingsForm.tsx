@@ -69,8 +69,8 @@ export function NotificationSettingsForm({
       />
       {error && <p className="text-sm text-danger">{error}</p>}
       {success && <p className="text-sm text-success">Settings saved.</p>}
-      <Button type="submit" className="self-start" disabled={submitting}>
-        {submitting ? "Saving…" : "Save Settings"}
+      <Button type="submit" className="self-start" loading={submitting}>
+        Save Settings
       </Button>
     </form>
   );

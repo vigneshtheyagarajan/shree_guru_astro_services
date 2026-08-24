@@ -24,7 +24,7 @@ export const PHASE_2_SERVICES: SeedServiceDef[] = [
         required: true,
       },
     ],
-    supportedModes: ["IN_PERSON", "CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "palmistry",
@@ -35,7 +35,7 @@ export const PHASE_2_SERVICES: SeedServiceDef[] = [
       { key: "dob", label: "Date of Birth", type: "date", required: false },
       { key: "palmPhoto", label: "Photo of Your Palm", type: "photo", required: true },
     ],
-    supportedModes: ["CHAT", "VIDEO_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "face-reading",
@@ -45,7 +45,7 @@ export const PHASE_2_SERVICES: SeedServiceDef[] = [
     intakeSchema: [
       { key: "facePhoto", label: "Photo of Your Face", type: "photo", required: true },
     ],
-    supportedModes: ["CHAT", "VIDEO_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "gemstone-consultation",
@@ -56,7 +56,7 @@ export const PHASE_2_SERVICES: SeedServiceDef[] = [
       ...birthDetails,
       { key: "concern", label: "Current Concern", type: "textarea", required: true },
     ],
-    supportedModes: ["IN_PERSON", "CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "vastu-consultation",
@@ -74,7 +74,7 @@ export const PHASE_2_SERVICES: SeedServiceDef[] = [
       { key: "floorPlanPhoto", label: "Floor Plan or Property Photo", type: "photo", required: true },
       { key: "concern", label: "Concern", type: "textarea", required: true },
     ],
-    supportedModes: ["IN_PERSON", "CHAT", "VIDEO_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
   {
     slug: "reiki-healing",
@@ -84,6 +84,6 @@ export const PHASE_2_SERVICES: SeedServiceDef[] = [
     intakeSchema: [
       { key: "concern", label: "What's on your mind?", type: "textarea", required: true },
     ],
-    supportedModes: ["IN_PERSON", "CHAT", "VIDEO_CALL", "PHONE_CALL"],
+    supportedModes: ["CHAT", "CALL"],
   },
 ];

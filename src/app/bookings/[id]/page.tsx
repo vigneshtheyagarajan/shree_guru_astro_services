@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle, StarRating } from "@/components/ui";
 import { ChatPanel } from "@/components/booking/ChatPanel";
-import { VideoCallPanel } from "@/components/booking/VideoCallPanel";
+import { CallPanel } from "@/components/booking/CallPanel";
+import { CallRecordingsList } from "@/components/booking/CallRecordingsList";
 import { BookingStatusActions } from "@/components/booking/BookingStatusActions";
 import { ReviewForm } from "@/components/booking/ReviewForm";
 import { DisputeForm } from "@/components/booking/DisputeForm";
@@ -14,10 +15,8 @@ import { formatDateTimeLong } from "@/lib/dateFormat";
 import { getOrCreateWallet } from "@/lib/wallet";
 
 const MODE_LABELS: Record<string, string> = {
-  IN_PERSON: "In-person",
   CHAT: "Chat",
-  PHONE_CALL: "Phone call",
-  VIDEO_CALL: "Video call",
+  CALL: "Call",
 };
 
 export default async function BookingDetailPage({
@@ -65,11 +64,9 @@ export default async function BookingDetailPage({
     booking.paymentLink?.status === "CREATED" &&
     (wallet?.balance ?? 0) >= booking.paymentLink.amount;
 
-  // Chat/phone/video are paid upfront -- the session itself (chat window,
-  // video join, phone number reveal) is gated behind that payment. In-person
-  // is unaffected: it's still paid after the session via the banner below.
-  const isLiveMode = booking.mode !== "IN_PERSON";
-  const isPaidForLiveSession = !isLiveMode || booking.paymentLink?.status === "PAID";
+  // Every booking is paid upfront -- the session itself (chat window, call
+  // join) is gated behind that payment.
+  const isPaid = booking.paymentLink?.status === "PAID";
 
   const razorpayKeyId = process.env.RAZORPAY_KEY_ID as string;
 
@@ -101,6 +98,9 @@ export default async function BookingDetailPage({
     </p>
   );
 
+  const windowStart = new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString();
+  const windowEnd = new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString();
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
       <Card>
@@ -128,76 +128,49 @@ export default async function BookingDetailPage({
             </div>
           </dl>
 
-          {booking.mode === "IN_PERSON" && booking.addressRevealedAt && (
-            <div className="rounded-lg border border-border bg-background-elevated p-3 text-sm">
-              <p className="text-foreground-muted">Address</p>
-              <p className="text-foreground">
-                {booking.astrologer.address || "Address not set by astrologer yet."}
-              </p>
-            </div>
-          )}
-
-          {booking.mode === "PHONE_CALL" &&
-            (isPaidForLiveSession || isClientViewer ? (
-              <div className="rounded-lg border border-border bg-background-elevated p-3 text-sm">
-                <p className="text-foreground-muted">Phone number</p>
-                <p className="text-foreground">{booking.clientPhone}</p>
-              </div>
-            ) : (
-              paymentPrompt
-            ))}
-
-          {booking.mode === "CHAT" &&
-            (isPaidForLiveSession ? (
+          {isAdminViewer ? (
+            booking.mode === "CHAT" ? (
               <ChatPanel
                 bookingId={booking.id}
-                windowStart={new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString()}
-                windowEnd={new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString()}
+                windowStart={windowStart}
+                windowEnd={windowEnd}
                 currentUserId={session.user.id}
+                readOnly
               />
             ) : (
-              paymentPrompt
-            ))}
+              <CallRecordingsList bookingId={booking.id} />
+            )
+          ) : (
+            <>
+              {booking.mode === "CHAT" &&
+                (isPaid ? (
+                  <ChatPanel
+                    bookingId={booking.id}
+                    windowStart={windowStart}
+                    windowEnd={windowEnd}
+                    currentUserId={session.user.id}
+                  />
+                ) : (
+                  paymentPrompt
+                ))}
 
-          {booking.mode === "VIDEO_CALL" &&
-            (!isPaidForLiveSession ? (
-              paymentPrompt
-            ) : booking.dailyRoomUrl ? (
-              <VideoCallPanel
-                bookingId={booking.id}
-                windowStart={new Date(booking.slot.startAt.getTime() - 5 * 60 * 1000).toISOString()}
-                windowEnd={new Date(booking.slot.endAt.getTime() + 10 * 60 * 1000).toISOString()}
-              />
-            ) : (
-              <p className="text-sm text-danger">
-                We couldn&apos;t set up the video room for this session. Please contact support.
-              </p>
-            ))}
+              {booking.mode === "CALL" &&
+                (isPaid ? (
+                  <CallPanel
+                    bookingId={booking.id}
+                    windowStart={windowStart}
+                    windowEnd={windowEnd}
+                    currentUserId={session.user.id}
+                    clientUserId={booking.clientId}
+                  />
+                ) : (
+                  paymentPrompt
+                ))}
+            </>
+          )}
 
           {isAstrologerViewer && (booking.status === "CONFIRMED" || booking.status === "IN_PROGRESS") && (
             <BookingStatusActions bookingId={booking.id} />
-          )}
-
-          {isClientViewer && booking.status === "PAYMENT_LINK_SENT" && booking.paymentLink && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
-              <p className="text-foreground">
-                Payment of ₹{booking.paymentLink.amount} is due for this session.
-              </p>
-              <div className="flex shrink-0 items-center gap-2">
-                {canPayFromWallet && <PayWithWalletButton bookingId={booking.id} />}
-                {booking.paymentLink.razorpayOrderId && (
-                  <RazorpayCheckoutButton
-                    razorpayKeyId={razorpayKeyId}
-                    orderId={booking.paymentLink.razorpayOrderId}
-                    amount={booking.paymentLink.amount}
-                    description={`${booking.serviceOffering.service.name} consultation`}
-                    prefillName={booking.client.name}
-                    prefillEmail={booking.client.email}
-                    verifyUrl={`/api/bookings/${booking.id}/pay/verify`}
-                  />
-                )}
-              </div>
-            </div>
           )}
 
           {(booking.status === "PAID" || booking.status === "RATED") && (

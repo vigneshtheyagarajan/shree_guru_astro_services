@@ -40,7 +40,7 @@ export function AstrologerStatusActions({
           <Button
             size="sm"
             variant="primary"
-            disabled={isPending}
+            loading={isPending}
             onClick={() => updateStatus("APPROVED")}
           >
             Approve
@@ -50,7 +50,7 @@ export function AstrologerStatusActions({
           <Button
             size="sm"
             variant="danger"
-            disabled={isPending}
+            loading={isPending}
             onClick={() => updateStatus("REJECTED")}
           >
             Reject
@@ -60,7 +60,7 @@ export function AstrologerStatusActions({
           <Button
             size="sm"
             variant="secondary"
-            disabled={isPending}
+            loading={isPending}
             onClick={() => updateStatus("SUSPENDED")}
           >
             Suspend
@@ -70,7 +70,7 @@ export function AstrologerStatusActions({
           <Button
             size="sm"
             variant="secondary"
-            disabled={isPending}
+            loading={isPending}
             onClick={() => updateStatus("PENDING")}
           >
             Reinstate to Pending

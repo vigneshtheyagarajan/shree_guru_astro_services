@@ -16,10 +16,8 @@ import { ChatNowButton } from "@/components/booking/ChatNowButton";
 import { auth } from "@/lib/auth";
 
 const MODE_LABELS: Record<string, string> = {
-  IN_PERSON: "In-person",
   CHAT: "Chat",
-  PHONE_CALL: "Phone call",
-  VIDEO_CALL: "Video call",
+  CALL: "Call",
 };
 
 export default async function AstrologerProfilePage({

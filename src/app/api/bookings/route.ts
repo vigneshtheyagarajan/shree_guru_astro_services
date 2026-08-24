@@ -5,10 +5,9 @@ import type { IntakeSchema } from "@/lib/services/intake-schema";
 import { NotificationService } from "@/lib/notifications/NotificationService";
 import { formatDateTimeLong } from "@/lib/dateFormat";
 import { pushBookingEvent } from "@/lib/integrations/googleCalendar";
-import { createRoomForBooking } from "@/lib/video/daily";
 import { createUpfrontPaymentLinkForBooking } from "@/lib/payments/razorpay";
 
-const VALID_MODES = ["IN_PERSON", "CHAT", "PHONE_CALL", "VIDEO_CALL"] as const;
+const VALID_MODES = ["CHAT", "CALL"] as const;
 
 class SlotUnavailableError extends Error {}
 
@@ -28,7 +27,6 @@ export async function POST(request: Request) {
   const mode = body?.mode;
   const intakeData: Record<string, string> =
     body?.intakeData && typeof body.intakeData === "object" ? body.intakeData : {};
-  const clientPhone = typeof body?.clientPhone === "string" ? body.clientPhone.trim() : "";
 
   if (
     !serviceOfferingId ||
@@ -64,13 +62,6 @@ export async function POST(request: Request) {
     .map((field) => intakeData[field.key])
     .filter((value): value is string => !!value);
 
-  if (mode === "PHONE_CALL" && !clientPhone) {
-    return NextResponse.json(
-      { error: "A phone number is required for phone-call bookings." },
-      { status: 400 },
-    );
-  }
-
   const slot = await prisma.slot.findUnique({ where: { id: slotId } });
   if (!slot || slot.astrologerId !== offering.astrologerId) {
     return NextResponse.json({ error: "Slot not found." }, { status: 404 });
@@ -95,8 +86,6 @@ export async function POST(request: Request) {
           mode,
           status: "CONFIRMED",
           confirmedAt: new Date(),
-          clientPhone: mode === "PHONE_CALL" ? clientPhone : null,
-          addressRevealedAt: mode === "IN_PERSON" ? new Date() : null,
         },
       });
 
@@ -123,27 +112,10 @@ export async function POST(request: Request) {
       console.error("Failed to push booking to Google Calendar", error);
     }
 
-    if (mode === "VIDEO_CALL") {
-      try {
-        const { roomUrl, roomName } = await createRoomForBooking({
-          id: booking.id,
-          endAt: slot.endAt,
-        });
-        await prisma.booking.update({
-          where: { id: booking.id },
-          data: { dailyRoomUrl: roomUrl, dailyRoomName: roomName },
-        });
-      } catch (error) {
-        console.error("Failed to create Daily.co video room", error);
-      }
-    }
-
-    if (mode !== "IN_PERSON") {
-      try {
-        await createUpfrontPaymentLinkForBooking(booking.id);
-      } catch (error) {
-        console.error("Failed to create upfront payment link", error);
-      }
+    try {
+      await createUpfrontPaymentLinkForBooking(booking.id);
+    } catch (error) {
+      console.error("Failed to create upfront payment link", error);
     }
 
     const bookingUrl = `/bookings/${booking.id}`;
@@ -167,7 +139,6 @@ export async function POST(request: Request) {
         ok: true,
         bookingId: booking.id,
         mode,
-        address: mode === "IN_PERSON" ? offering.astrologer.address : null,
       },
       { status: 201 },
     );

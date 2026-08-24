@@ -54,8 +54,8 @@ export function GoogleCalendarCard({
               confirmed bookings are added to your calendar.
             </p>
             <div className="flex gap-2">
-              <Button size="sm" disabled={isPending} onClick={handleSync}>
-                {isPending ? "Working…" : "Sync now"}
+              <Button size="sm" loading={isPending} onClick={handleSync}>
+                Sync now
               </Button>
               <Button size="sm" variant="secondary" disabled={isPending} onClick={handleDisconnect}>
                 Disconnect

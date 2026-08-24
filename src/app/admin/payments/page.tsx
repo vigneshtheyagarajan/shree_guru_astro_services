@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { CreatePaymentLinkButton } from "@/components/admin/CreatePaymentLinkButton";
 import { formatDateTimeShort } from "@/lib/dateFormat";
 
 const PAYMENT_STATUS_VARIANT: Record<string, "warning" | "success" | "danger"> = {
@@ -21,66 +20,29 @@ export default async function AdminPaymentsPage() {
     redirect("/");
   }
 
-  const [missingLinkBookings, paymentLinks] = await Promise.all([
-    prisma.booking.findMany({
-      where: { status: "COMPLETED", paymentLink: null },
-      include: {
-        client: true,
-        astrologer: { include: { user: true } },
-        serviceOffering: { include: { service: true } },
-      },
-      orderBy: { completedAt: "desc" },
-    }),
-    prisma.paymentLink.findMany({
-      include: {
-        booking: {
-          include: {
-            client: true,
-            astrologer: { include: { user: true } },
-            serviceOffering: { include: { service: true } },
-          },
+  const paymentLinks = await prisma.paymentLink.findMany({
+    include: {
+      booking: {
+        include: {
+          client: true,
+          astrologer: { include: { user: true } },
+          serviceOffering: { include: { service: true } },
         },
       },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    }),
-  ]);
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-16">
       <header>
         <h1 className="text-2xl font-semibold text-foreground">Payments</h1>
         <p className="text-sm text-foreground-muted">
-          Reconcile payment links and retry ones that failed to generate.
+          Every booking is paid upfront before the session unlocks -- this is a read-only
+          reconciliation log.
         </p>
       </header>
-
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">
-          Completed bookings missing a payment link
-        </h2>
-        {missingLinkBookings.length === 0 ? (
-          <p className="text-sm text-foreground-muted">None. Everything looks reconciled.</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {missingLinkBookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">
-                      {booking.serviceOffering.service.name} · ₹{booking.serviceOffering.pricePerSession}
-                    </p>
-                    <p className="truncate text-sm text-foreground-muted">
-                      {booking.client.name} · {booking.astrologer.user.name}
-                    </p>
-                  </div>
-                  <CreatePaymentLinkButton bookingId={booking.id} />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div>
         <h2 className="mb-3 text-lg font-semibold text-foreground">All payment links</h2>

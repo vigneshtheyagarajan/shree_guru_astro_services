@@ -152,8 +152,8 @@ export function AvailabilityManager({
               onChange={(event) => setSlotDuration(event.target.value)}
               className="w-32"
             />
-            <Button type="submit" size="sm" disabled={submittingRule}>
-              {submittingRule ? "Adding…" : "Add"}
+            <Button type="submit" size="sm" loading={submittingRule}>
+              Add
             </Button>
           </form>
           {ruleError && <p className="text-sm text-danger">{ruleError}</p>}
@@ -224,8 +224,8 @@ export function AvailabilityManager({
                 />
               </>
             )}
-            <Button type="submit" size="sm" disabled={submittingException}>
-              {submittingException ? "Adding…" : "Add"}
+            <Button type="submit" size="sm" loading={submittingException}>
+              Add
             </Button>
           </form>
           {exceptionError && <p className="text-sm text-danger">{exceptionError}</p>}
