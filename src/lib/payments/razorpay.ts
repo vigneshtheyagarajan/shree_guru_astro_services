@@ -2,6 +2,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import { prisma } from "@/lib/prisma";
 import { NotificationService } from "@/lib/notifications/NotificationService";
+import { formatDateTimeLong } from "@/lib/dateFormat";
 
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET as string;
 
@@ -42,10 +43,11 @@ async function createRazorpayOrderRecord(booking: {
 /**
  * Creates a Razorpay Order immediately for a booking, before the session
  * happens -- every booking (chat or call) must be paid upfront. This does
- * NOT change booking.status -- the booking stays CONFIRMED/IN_PROGRESS
- * through the session, and only the PaymentLink tracks payment. Session
- * access (chat send, call join) is gated on that PaymentLink's status
- * elsewhere.
+ * NOT change booking.status -- the booking stays PENDING (the slot is
+ * already held, but the astrologer isn't notified and the booking isn't
+ * truly confirmed) until markBookingPaidFromPaymentLink flips it to
+ * CONFIRMED. Session access (chat send, call join) is separately gated on
+ * the PaymentLink's status.
  */
 export async function createUpfrontPaymentLinkForBooking(bookingId: string) {
   const booking = await prisma.booking.findUnique({
@@ -102,6 +104,7 @@ export async function markBookingPaidFromPaymentLink(razorpayIdentifier: string)
         include: {
           astrologer: { include: { user: true } },
           serviceOffering: { include: { service: true } },
+          slot: true,
         },
       },
     },
@@ -109,30 +112,51 @@ export async function markBookingPaidFromPaymentLink(razorpayIdentifier: string)
   if (!paymentLink) return { updated: false, reason: "payment_link_not_found" as const };
   if (paymentLink.status === "PAID") return { updated: false, reason: "already_paid" as const };
 
-  // Payment always arrives before the session (booking stays CONFIRMED/
-  // IN_PROGRESS) -- "Mark Complete" is what later moves the booking to PAID
-  // and fires the review request, so this only needs to settle the
-  // PaymentLink itself.
   const now = new Date();
   await prisma.paymentLink.update({
     where: { id: paymentLink.id },
     data: { status: "PAID", paidAt: now },
   });
   const booking = paymentLink.booking;
+  const serviceName = booking.serviceOffering.service.name;
 
-  const serviceName = paymentLink.booking.serviceOffering.service.name;
-  await Promise.all([
+  const notifications = [
     NotificationService.send(booking.clientId, "PAYMENT_RECEIVED", {
       title: "Payment received",
       message: `Thanks! Your payment for ${serviceName} was received.`,
       url: `/bookings/${booking.id}`,
     }),
-    NotificationService.send(paymentLink.booking.astrologer.userId, "PAYMENT_RECEIVED", {
+    NotificationService.send(booking.astrologer.userId, "PAYMENT_RECEIVED", {
       title: "Payment received",
       message: `The client's payment for ${serviceName} was received.`,
       url: `/bookings/${booking.id}`,
     }),
-  ]);
+  ];
+
+  // The booking only becomes real (and the astrologer gets told about it)
+  // once payment actually lands -- see /api/bookings/route.ts for why it
+  // starts PENDING with the slot already held but nothing confirmed yet.
+  if (booking.status === "PENDING") {
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { status: "CONFIRMED", confirmedAt: now },
+    });
+    const scheduledFor = formatDateTimeLong(booking.slot.startAt);
+    notifications.push(
+      NotificationService.send(booking.clientId, "BOOKING_CONFIRMED", {
+        title: "Booking confirmed",
+        message: `Your ${serviceName} session is confirmed for ${scheduledFor}.`,
+        url: `/bookings/${booking.id}`,
+      }),
+      NotificationService.send(booking.astrologer.userId, "BOOKING_CONFIRMED", {
+        title: "New booking",
+        message: `You have a new ${serviceName} session on ${scheduledFor}.`,
+        url: `/bookings/${booking.id}`,
+      }),
+    );
+  }
+
+  await Promise.all(notifications);
 
   return { updated: true as const };
 }

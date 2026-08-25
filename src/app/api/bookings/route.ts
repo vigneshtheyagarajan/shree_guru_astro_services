@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { IntakeSchema } from "@/lib/services/intake-schema";
-import { NotificationService } from "@/lib/notifications/NotificationService";
-import { formatDateTimeLong } from "@/lib/dateFormat";
 import { pushBookingEvent } from "@/lib/integrations/googleCalendar";
 import { createUpfrontPaymentLinkForBooking } from "@/lib/payments/razorpay";
 
@@ -84,8 +82,7 @@ export async function POST(request: Request) {
           serviceOfferingId: offering.id,
           slotId,
           mode,
-          status: "CONFIRMED",
-          confirmedAt: new Date(),
+          status: "PENDING",
         },
       });
 
@@ -112,27 +109,16 @@ export async function POST(request: Request) {
       console.error("Failed to push booking to Google Calendar", error);
     }
 
+    // The slot is held (BOOKED) as soon as this transaction commits, so two
+    // clients can't race for it -- but the booking itself stays PENDING, and
+    // the astrologer isn't notified, until payment actually succeeds (see
+    // markBookingPaidFromPaymentLink). An unpaid PENDING booking is expired
+    // and its slot released by the reconcile-payments cron.
     try {
       await createUpfrontPaymentLinkForBooking(booking.id);
     } catch (error) {
       console.error("Failed to create upfront payment link", error);
     }
-
-    const bookingUrl = `/bookings/${booking.id}`;
-    const scheduledFor = formatDateTimeLong(slot.startAt);
-
-    await Promise.all([
-      NotificationService.send(session.user.id, "BOOKING_CONFIRMED", {
-        title: "Booking confirmed",
-        message: `Your ${offering.service.name} session is confirmed for ${scheduledFor}.`,
-        url: bookingUrl,
-      }),
-      NotificationService.send(offering.astrologer.userId, "BOOKING_CONFIRMED", {
-        title: "New booking",
-        message: `You have a new ${offering.service.name} session on ${scheduledFor}.`,
-        url: bookingUrl,
-      }),
-    ]);
 
     return NextResponse.json(
       {

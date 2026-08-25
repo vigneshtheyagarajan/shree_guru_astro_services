@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { razorpay, markBookingPaidFromPaymentLink } from "@/lib/payments/razorpay";
 import { creditWalletFromTopUp } from "@/lib/wallet";
+import { deleteBookingEvent } from "@/lib/integrations/googleCalendar";
+
+// A booking holds its slot (BOOKED, not visible to other clients) the
+// instant it's created, but stays PENDING -- not confirmed, astrologer not
+// notified -- until payment lands. If nobody ever completes payment, the
+// slot must not stay locked forever; this is the window we give them.
+const PAYMENT_WINDOW_MINUTES = 15;
 
 // Intended to run every few minutes (see .github/workflows/frequent-crons.yml)
 // as a safety net for the embedded-Checkout flow: if a client's browser
@@ -9,7 +16,8 @@ import { creditWalletFromTopUp } from "@/lib/wallet";
 // client-side verification call reaches our server -- this cross-checks any
 // still-CREATED orders against Razorpay's own status API and applies the
 // PAID transition. Also the primary path for accounts where Razorpay
-// webhooks aren't configured.
+// webhooks aren't configured. Separately, it expires abandoned PENDING
+// bookings (payment never completed) and releases their slot.
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -54,5 +62,37 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, checked, reconciled, failed });
+  let expired = 0;
+  const expiryCutoff = new Date(Date.now() - PAYMENT_WINDOW_MINUTES * 60 * 1000);
+  const abandonedBookings = await prisma.booking.findMany({
+    where: { status: "PENDING", createdAt: { lt: expiryCutoff } },
+    include: { slot: true, astrologer: true, paymentLink: true },
+  });
+  for (const booking of abandonedBookings) {
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.update({
+        where: { id: booking.id },
+        data: { status: "CANCELLED", cancelledAt: new Date() },
+      });
+      if (booking.slot.startAt > new Date()) {
+        await tx.slot.update({ where: { id: booking.slotId }, data: { status: "OPEN" } });
+      }
+      if (booking.paymentLink) {
+        await tx.paymentLink.update({
+          where: { id: booking.paymentLink.id },
+          data: { status: "CANCELLED" },
+        });
+      }
+    });
+    if (booking.googleEventId) {
+      try {
+        await deleteBookingEvent(booking.astrologer, booking.googleEventId);
+      } catch (error) {
+        console.error(`Failed to delete Google Calendar event for expired booking ${booking.id}`, error);
+      }
+    }
+    expired += 1;
+  }
+
+  return NextResponse.json({ ok: true, checked, reconciled, failed, expired });
 }

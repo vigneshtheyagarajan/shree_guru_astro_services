@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { razorpay } from "@/lib/payments/razorpay";
 import { NotificationService } from "@/lib/notifications/NotificationService";
+import { formatDateTimeLong } from "@/lib/dateFormat";
 
 const LOYALTY_BONUS_THRESHOLD = 1000;
 const LOYALTY_BONUS_RATE = 0.1;
@@ -115,6 +116,7 @@ export async function payBookingFromWallet(bookingId: string, userId: string) {
       paymentLink: true,
       serviceOffering: { include: { service: true } },
       astrologer: { include: { user: true } },
+      slot: true,
     },
   });
   if (!booking || booking.clientId !== userId) {
@@ -129,9 +131,7 @@ export async function payBookingFromWallet(bookingId: string, userId: string) {
     throw new WalletError("Insufficient wallet balance.");
   }
 
-  // Payment always arrives before the session -- booking.status is left
-  // alone here; "Mark Complete" is what later moves it to PAID and fires
-  // the review request (see /api/bookings/[id]/complete/route.ts).
+  const now = new Date();
   await prisma.$transaction([
     prisma.wallet.update({
       where: { id: wallet.id },
@@ -147,12 +147,15 @@ export async function payBookingFromWallet(bookingId: string, userId: string) {
     }),
     prisma.paymentLink.update({
       where: { id: booking.paymentLink.id },
-      data: { status: "PAID", paidAt: new Date() },
+      data: { status: "PAID", paidAt: now },
     }),
+    ...(booking.status === "PENDING"
+      ? [prisma.booking.update({ where: { id: bookingId }, data: { status: "CONFIRMED", confirmedAt: now } })]
+      : []),
   ]);
 
   const serviceName = booking.serviceOffering.service.name;
-  await Promise.all([
+  const notifications = [
     NotificationService.send(booking.clientId, "PAYMENT_RECEIVED", {
       title: "Payment received",
       message: `Thanks! Your payment for ${serviceName} was received.`,
@@ -163,7 +166,27 @@ export async function payBookingFromWallet(bookingId: string, userId: string) {
       message: `The client's payment for ${serviceName} was received.`,
       url: `/bookings/${booking.id}`,
     }),
-  ]);
+  ];
+
+  // See markBookingPaidFromPaymentLink in razorpay.ts -- the booking only
+  // becomes real (and the astrologer gets told) once payment lands.
+  if (booking.status === "PENDING") {
+    const scheduledFor = formatDateTimeLong(booking.slot.startAt);
+    notifications.push(
+      NotificationService.send(booking.clientId, "BOOKING_CONFIRMED", {
+        title: "Booking confirmed",
+        message: `Your ${serviceName} session is confirmed for ${scheduledFor}.`,
+        url: `/bookings/${booking.id}`,
+      }),
+      NotificationService.send(booking.astrologer.userId, "BOOKING_CONFIRMED", {
+        title: "New booking",
+        message: `You have a new ${serviceName} session on ${scheduledFor}.`,
+        url: `/bookings/${booking.id}`,
+      }),
+    );
+  }
+
+  await Promise.all(notifications);
 }
 
 export { WalletError };

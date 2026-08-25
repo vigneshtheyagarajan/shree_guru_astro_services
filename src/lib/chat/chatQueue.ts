@@ -20,8 +20,7 @@ async function createInstantBooking(clientId: string, offering: ServiceOffering)
         serviceOfferingId: offering.id,
         slotId: slot.id,
         mode: "CHAT",
-        status: "CONFIRMED",
-        confirmedAt: startAt,
+        status: "PENDING",
         isInstant: true,
       },
     });
@@ -66,7 +65,7 @@ export async function requestChatNow(clientId: string, serviceOfferingId: string
     where: {
       astrologerId: offering.astrologerId,
       isInstant: true,
-      status: { in: ["CONFIRMED", "IN_PROGRESS"] },
+      status: { in: ["PENDING", "CONFIRMED", "IN_PROGRESS"] },
     },
   });
 
