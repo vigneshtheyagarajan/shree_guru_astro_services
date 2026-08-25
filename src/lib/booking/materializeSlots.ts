@@ -2,21 +2,48 @@ import { prisma } from "@/lib/prisma";
 
 const WINDOW_DAYS = 14;
 
+// Astrologer-entered times (AvailabilityRule/Exception startTime/endTime,
+// and the calendar date exceptions are picked against) are Asia/Kolkata
+// wall-clock -- see dateFormat.ts's note that Node defaults to UTC in
+// production regardless of where users actually are. Using JS Date's
+// local-timezone-dependent methods (setHours/getDay/setDate) here would
+// silently treat those wall-clock times as whatever timezone the server
+// process happens to run in, shifting every slot by the IST offset. All
+// date/time arithmetic below is therefore done with explicit UTC methods
+// and a fixed IST offset (Asia/Kolkata has no DST) instead.
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
 function parseTimeToMinutes(time: string) {
   const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
-function dateAtMinutes(day: Date, minutes: number) {
-  const result = new Date(day);
-  result.setHours(0, minutes, 0, 0);
-  return result;
+// Returns the UTC instant corresponding to 00:00 IST on the IST calendar
+// date that `date` falls on.
+function startOfIstDay(date: Date) {
+  const shifted = new Date(date.getTime() + IST_OFFSET_MS);
+  const utcMidnightOfShiftedDate = Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate(),
+  );
+  return new Date(utcMidnightOfShiftedDate - IST_OFFSET_MS);
 }
 
-function startOfDay(date: Date) {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
+function addDays(date: Date, days: number) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+// day-of-week (0 = Sunday) of the IST calendar date `istMidnight` (itself a
+// UTC instant, as returned by startOfIstDay) represents.
+function istDayOfWeek(istMidnight: Date) {
+  return new Date(istMidnight.getTime() + IST_OFFSET_MS).getUTCDay();
+}
+
+// `istMidnight` is 00:00 IST for a given day (as a UTC instant); `minutes`
+// is minutes-since-midnight IST wall-clock time (e.g. from "14:00").
+function dateAtMinutes(istMidnight: Date, minutes: number) {
+  return new Date(istMidnight.getTime() + minutes * 60 * 1000);
 }
 
 /**
@@ -31,21 +58,20 @@ export async function materializeSlotsForAstrologer(astrologerId: string) {
     prisma.availabilityException.findMany({
       where: {
         astrologerId,
-        date: { gte: startOfDay(new Date()) },
+        date: { gte: startOfIstDay(new Date()) },
       },
     }),
   ]);
 
-  const today = startOfDay(new Date());
+  const today = startOfIstDay(new Date());
   const validStarts: Date[] = [];
   const slotsToCreate: { astrologerId: string; startAt: Date; endAt: Date }[] = [];
 
   for (let dayOffset = 0; dayOffset < WINDOW_DAYS; dayOffset++) {
-    const day = new Date(today);
-    day.setDate(day.getDate() + dayOffset);
+    const day = addDays(today, dayOffset);
 
     const dayExceptions = exceptions.filter(
-      (exception) => startOfDay(exception.date).getTime() === day.getTime(),
+      (exception) => startOfIstDay(exception.date).getTime() === day.getTime(),
     );
 
     // A BLOCKED exception with no time range blocks the whole day (e.g. a
@@ -75,7 +101,7 @@ export async function materializeSlotsForAstrologer(astrologerId: string) {
       }
     }
 
-    const dayRules = rules.filter((rule) => rule.dayOfWeek === day.getDay());
+    const dayRules = rules.filter((rule) => rule.dayOfWeek === istDayOfWeek(day));
     for (const rule of dayRules) {
       windows.push({
         startTime: rule.startTime,

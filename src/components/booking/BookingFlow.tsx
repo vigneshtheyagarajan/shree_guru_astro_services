@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Select, Stepper } from "@/components/ui";
 import { IntakeFormRenderer, type IntakeValues } from "@/components/forms/IntakeFormRenderer";
 import { SlotPicker, type SlotOption } from "@/components/booking/SlotPicker";
@@ -27,6 +28,7 @@ export function BookingFlow({
   slots: SlotOption[];
 }) {
   const { t } = useLocale();
+  const router = useRouter();
   const MODE_LABELS: Record<Mode, string> = {
     CHAT: t("booking.modeChat"),
     CALL: t("booking.modeCall"),
@@ -72,15 +74,19 @@ export function BookingFlow({
       }),
     });
 
-    setSubmitting(false);
     const body = await response.json().catch(() => null);
 
     if (!response.ok) {
+      setSubmitting(false);
       setError(body?.error ?? "Failed to create booking.");
       return;
     }
 
     setStep("done");
+    // Payment happens on the booking page (embedded Razorpay Checkout) --
+    // send the client straight there instead of leaving them on a static
+    // confirmation with no way to actually pay.
+    router.push(`/bookings/${body.bookingId}`);
   }
 
   return (
