@@ -48,18 +48,23 @@ Still self-contained in `src/lib/guru/`, plus one new table (`GuruSession`) and 
 - **Free allowance, bundles, holds:** one free question (`DEFAULT_PRICING.freeQuestions`, change to 2 if wanted). A free user who bundles several questions gets the most important one answered. A paying user sees "That's N questions, ₹X" and must reply yes before being charged. Questions asked before there is a chart are held (free), offered back after the first look, and charged only when the user says yes.
 - **Persona and rules** (`persona.ts`): experienced, warm astrologer; every chart fact must come from a tool; no death/lifespan prediction, no medical/legal/investment advice, no fear-mongering, no paid-remedy selling; treats user text as untrusted (prompt-injection attempts are refused by the gate without calling the model).
 - **Tools the model calls** (`tools/index.ts`): place lookup, Vedic chart, current transits, **transit timeline (dated sign changes of Jupiter, Saturn, Rahu, Ketu)**, kundli matching, numerology, tarot draw.
-- **Model layer is swappable** (`llm/`): Gemini adapter (free tier, development) and Claude adapter (paid, production). Pick with environment variables:
+- **Model layer is swappable, with automatic fallback** (`llm/`): Gemini (free), Groq (free), Mistral (free) and Claude (paid) adapters behind one interface. With several keys set, Guru tries them in order and switches automatically when one runs out of quota or is overloaded, then leaves the exhausted one alone until its own retry time. The switch is invisible to the gate, so charging is unaffected, and each reply records which model wrote it (`model` in the reply).
 
 | Variable | Meaning |
 | --- | --- |
 | `GURU_ENABLED=true` | Turns the chat route on (off by default) |
-| `GURU_LLM_PROVIDER` | `gemini` (default) or `anthropic` |
-| `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` | Keys |
-| `GURU_MODEL`, `GURU_CLASSIFIER_MODEL` | Override model names (defaults: Gemini `gemini-3.8-flash` + `gemini-3.1-flash-lite`; Claude `claude-opus-5-5` + `claude-haiku-5-5`) |
+| `GEMINI_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY` | Free-tier keys. Every key present joins the chain automatically, in this order |
+| `ANTHROPIC_API_KEY` | Paid Claude. Never used unless listed explicitly |
+| `GURU_LLM_PROVIDERS` | Optional explicit chain, e.g. `anthropic,gemini` to put paid Claude first with free fallbacks behind it |
+| `GURU_<PROVIDER>_MODEL`, `GURU_<PROVIDER>_CLASSIFIER_MODEL` | Override model names, e.g. `GURU_GROQ_MODEL` |
 | `GURU_CLAUDE_EFFORT` | Claude reasoning depth: low, medium, high, xhigh, max |
 
+Defaults: Gemini `gemini-3.8-flash` + `gemini-3.1-flash-lite`; Groq `openai/gpt-oss-120b` + `llama-3.1-8b-instant`; Mistral `mistral-large-latest` + `mistral-small-latest`; Claude `claude-opus-5-5` + `claude-haiku-5-5`. Free-tier model names change often: run `npx tsx scripts/guru/check-providers.ts` after adding a key to confirm each model replies, calls tools and returns JSON.
+
+Free-tier caveats: free providers are for development with fictional data only. Mistral's free tier requires opting in to training on your requests, and Gemini's free tier may be used to improve Google's models. Fallback models are not equal in quality, so answers produced during a fallback are weaker evidence about Guru's real quality; evaluation runs (Phase 3) should pin one model.
+
 - **Try it in a terminal:** `npx tsx scripts/guru/chat.ts --free 1 --credit 0` (add `--credit 300` to test paid flows, `--script file.txt` for scripted runs). Use fictional birth details only.
-- **Tests:** 242, including the full charge/hold/refund matrix and the Claude adapter against a fake client. No test calls a real model.
+- **Tests:** 277, including the full charge/hold/refund matrix and the Claude adapter against a fake client. No test calls a real model.
 
 **Live testing on the Gemini free tier found:**
 

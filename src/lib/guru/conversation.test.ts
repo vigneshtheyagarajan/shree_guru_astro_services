@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { handleTurn, GuruAccessError, type GuruDeps } from "./conversation";
 import { InMemoryEntitlements } from "./entitlements";
+import { FallbackProvider } from "./llm/fallback";
 import { ScriptedProvider, textReply, toolReply } from "./llm/fake";
+import { LlmError } from "./llm/types";
 import { InMemorySessionStore } from "./session";
 import type { Geocoder } from "./tools/geocode";
 
@@ -248,5 +250,40 @@ describe("handleTurn: sessions", () => {
     await handleTurn({ text: "first" }, deps);
     await handleTurn({ sessionId: "s1", text: "second" }, deps);
     expect(provider.generateCalls[1].messages.map((m) => m.role)).toEqual(["user", "assistant", "user"]);
+  });
+});
+
+describe("handleTurn: provider fallback", () => {
+  it("answers and charges normally when the first provider is out of quota", async () => {
+    const quota = new LlmError("daily quota", "rate_limited", undefined, 3_600_000);
+    const exhausted = new ScriptedProvider([quota, quota, quota], [quota, quota, quota]);
+    const backup = new ScriptedProvider(
+      [chartCalls, textReply("Look"), textReply("Career answer from the backup")],
+      [cls("data", [], { service: "vedic" }), cls("question", ["Will my career improve?"])],
+    );
+    const { deps, entitlements } = setup();
+    const events: string[] = [];
+    deps.provider = new FallbackProvider([exhausted, backup], { onFallback: (e) => events.push(e.error.kind) });
+
+    await handleTurn({ text: "details" }, deps);
+    const r = await handleTurn({ sessionId: "s1", text: "Will my career improve?" }, deps);
+
+    expect(r).toMatchObject({ decision: "answer", answered: 1, text: "Career answer from the backup", model: "scripted:scripted-1" });
+    expect(events[0]).toBe("rate_limited");
+    expect(exhausted.generateCalls.length + exhausted.structuredCalls.length).toBe(1); // asked once, then left alone
+    expect(await entitlements.snapshot()).toEqual({ freeRemaining: 0, creditRupees: 0 });
+  });
+
+  it("if every provider is down the user is not charged", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { deps, entitlements } = setup();
+    deps.provider = new ScriptedProvider([chartCalls, textReply("Look")], [cls("data", [], { service: "vedic" })]);
+    await handleTurn({ text: "details" }, deps);
+
+    const busy = () => new ScriptedProvider([new LlmError("busy", "overloaded")], [cls("question", ["Will my career improve?"])]);
+    deps.provider = new FallbackProvider([busy(), busy()]);
+    const r = await handleTurn({ sessionId: "s1", text: "Will my career improve?" }, deps);
+    expect(r.decision).toBe("error");
+    expect(await entitlements.snapshot()).toEqual({ freeRemaining: 1, creditRupees: 0 });
   });
 });

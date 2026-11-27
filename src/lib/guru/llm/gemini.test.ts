@@ -92,7 +92,7 @@ describe("history mapping", () => {
     ]);
     expect(contents).toEqual([
       { role: "user", parts: [{ text: "hello" }] },
-      { role: "model", parts: [{ functionCall: { id: "c1", name: "t", args: { a: 1 } } }] },
+      { role: "model", parts: [{ functionCall: { id: "c1", name: "t", args: { a: 1 } }, thoughtSignature: "skip_thought_signature_validator" }] },
       { role: "user", parts: [{ functionResponse: { id: "c1", name: "t", response: { output: { ok: true } } } }] },
       { role: "user", parts: [{ functionResponse: { id: "c2", name: "t", response: { error: "boom" } } }] },
     ]);
@@ -189,5 +189,36 @@ describe("generateStructured", () => {
   it("throws a typed error on invalid JSON", async () => {
     const { p } = provider(async () => ({ text: "not json" }) as unknown as GenerateContentResponse);
     await expect(p.generateStructured({ system: "s", prompt: "p", schema: {} })).rejects.toBeInstanceOf(LlmError);
+  });
+});
+
+describe("GeminiProvider: quota errors", () => {
+  const quotaError = (retryDelay: string) =>
+    Object.assign(new Error(`{"error":{"code":429,"details":[{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"${retryDelay}"}]}}`), { status: 429 });
+
+  it("does not wait on a quota that resets in hours, and reports the delay so another provider can take over", async () => {
+    const generate = vi.fn(async () => {
+      throw quotaError("10833s");
+    });
+    const { p, sleep } = provider(generate);
+    await expect(p.generate({ system: "s", messages: [user("hi")] })).rejects.toMatchObject({ kind: "rate_limited", retryAfterMs: 10_833_000 });
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it("waits out a short provider-stated delay and retries", async () => {
+    const generate = vi.fn().mockRejectedValueOnce(quotaError("7s")).mockResolvedValueOnce(response([{ text: "ok" }]));
+    const { p, sleep } = provider(generate);
+    expect((await p.generate({ system: "s", messages: [user("hi")] })).text).toBe("ok");
+    expect(sleep).toHaveBeenCalledWith(7000);
+  });
+
+  it("signs only the first function call of a transferred turn", () => {
+    const out = toGeminiContents([
+      { role: "assistant", parts: [{ type: "tool_call", id: "a", name: "t", args: {} }, { type: "tool_call", id: "b", name: "u", args: {} }] },
+    ]);
+    const parts = out[0].parts as { thoughtSignature?: string }[];
+    expect(parts[0].thoughtSignature).toBe("skip_thought_signature_validator");
+    expect(parts[1].thoughtSignature).toBeUndefined();
   });
 });

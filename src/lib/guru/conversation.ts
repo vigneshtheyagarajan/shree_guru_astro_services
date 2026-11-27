@@ -47,6 +47,8 @@ export interface GuruReply {
   /** Questions answered this turn (free or paid). */
   answered: number;
   chargedRupees: number;
+  /** Model that wrote the answer ("provider:model"), when one did. Useful when a fallback took over. */
+  model: string | null;
   balance: EntitlementSnapshot;
   usage: TokenUsage;
 }
@@ -73,6 +75,7 @@ export async function handleTurn(input: GuruTurnInput, deps: GuruDeps): Promise<
     service: session.service,
     answered: 0,
     chargedRupees: 0,
+    model: null,
     balance,
     usage: session.usage,
     ...partial,
@@ -190,6 +193,7 @@ export async function handleTurn(input: GuruTurnInput, deps: GuruDeps): Promise<
         decision: decision.type,
         answered: answeredCount,
         chargedRupees: reservation?.chargedRupees ?? 0,
+        model: result.model,
         usage,
       },
       await deps.entitlements.snapshot(),
@@ -211,11 +215,12 @@ async function runModelTurn(
   deps: GuruDeps,
   now: () => Date,
   input: GuruTurnInput,
-): Promise<{ text: string; usage: TokenUsage }> {
+): Promise<{ text: string; usage: TokenUsage; model: string }> {
   const maxRounds = deps.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS;
   const system = buildSystemPrompt(session, mode, now());
   const messages: ChatMessage[] = [...session.messages, userMessage];
   let usage: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  let model = deps.provider.model;
 
   for (let round = 0; round < maxRounds; round++) {
     const result = await deps.provider.generate({
@@ -227,13 +232,14 @@ async function runModelTurn(
       onText: input.onText,
     });
     usage = addUsage(usage, result.usage);
+    model = deps.provider.name === "fallback" ? result.model : `${deps.provider.name}:${result.model}`;
     messages.push(result.message);
 
     if (result.toolCalls.length === 0) {
       const text = result.text.trim();
       if (!text) throw new Error(`Model returned no text (finish reason: ${result.finishReason}).`);
       session.messages = messages;
-      return { text, usage };
+      return { text, usage, model };
     }
 
     const results = [];

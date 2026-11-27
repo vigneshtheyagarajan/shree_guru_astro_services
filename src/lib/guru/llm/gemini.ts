@@ -41,12 +41,25 @@ const THINKING_LEVELS: Record<GeminiThinking, ThinkingLevel> = {
   high: ThinkingLevel.HIGH,
 };
 
+/** Longest a retry will wait for a provider-stated delay; longer means "use another provider". */
+const MAX_INLINE_WAIT_MS = 20_000;
+
+/** Gemini 3 insists on a thought signature for function calls; ones another model made have none. */
+export const FOREIGN_THOUGHT_SIGNATURE = "skip_thought_signature_validator";
+
 const BLOCKED_REASONS = new Set(["SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "RECITATION", "LANGUAGE"]);
+
+/** Gemini reports how long to wait as `"retryDelay":"10833s"` in the error body. */
+function retryDelayMs(message: string): number | undefined {
+  const m = message.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
+  return m ? Math.round(Number(m[1]) * 1000) : undefined;
+}
 
 function classifyError(error: unknown): LlmError {
   const status = (error as { status?: number })?.status;
-  const message = String((error as Error)?.message ?? error).slice(0, 300);
-  if (status === 429) return new LlmError(`Gemini rate limit: ${message}`, "rate_limited", error);
+  const full = String((error as Error)?.message ?? error);
+  const message = full.slice(0, 300);
+  if (status === 429) return new LlmError(`Gemini rate limit: ${message}`, "rate_limited", error, retryDelayMs(full));
   if (status === 500 || status === 503 || status === 504) return new LlmError(`Gemini overloaded: ${message}`, "overloaded", error);
   if (status === 401 || status === 403) return new LlmError(`Gemini auth error: ${message}`, "auth", error);
   if (status === 400 || status === 404) return new LlmError(`Gemini rejected the request: ${message}`, "bad_request", error);
@@ -67,12 +80,17 @@ export function toGeminiContents(messages: ChatMessage[]): Content[] {
     if (message.role === "assistant" && message.providerRaw?.provider === "gemini") {
       return message.providerRaw.data as Content;
     }
+    let signed = false;
     const parts: GeminiPart[] = message.parts.map((part): GeminiPart => {
       switch (part.type) {
         case "text":
           return { text: part.text };
-        case "tool_call":
-          return { functionCall: { id: part.id, name: part.name, args: part.args } };
+        case "tool_call": {
+          // Only the first function call of a turn carries the signature.
+          const signature = signed ? {} : { thoughtSignature: FOREIGN_THOUGHT_SIGNATURE };
+          signed = true;
+          return { functionCall: { id: part.id, name: part.name, args: part.args }, ...signature };
+        }
         case "tool_result":
           return {
             functionResponse: {
@@ -117,7 +135,9 @@ export class GeminiProvider implements LlmProvider {
         const error = raw instanceof LlmError ? raw : classifyError(raw);
         const retryable = error.kind === "rate_limited" || error.kind === "overloaded";
         if (!retryable || attempt >= this.maxRetries || signal?.aborted) throw error;
-        await this.sleep(800 * 2 ** attempt);
+        // A quota that resets in minutes or hours (e.g. the daily limit) will not clear by waiting here.
+        if (error.retryAfterMs !== undefined && error.retryAfterMs > MAX_INLINE_WAIT_MS) throw error;
+        await this.sleep(Math.max(800 * 2 ** attempt, error.retryAfterMs ?? 0));
         attempt++;
       }
     }

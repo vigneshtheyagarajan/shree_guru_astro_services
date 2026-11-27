@@ -97,6 +97,8 @@ export class LlmError extends Error {
     message: string,
     readonly kind: "rate_limited" | "overloaded" | "auth" | "bad_request" | "blocked" | "unknown",
     readonly cause?: unknown,
+    /** How long the provider says to wait before trying again, when it says. */
+    readonly retryAfterMs?: number,
   ) {
     super(message);
     this.name = "LlmError";

@@ -77,7 +77,7 @@ async function run() {
     sessionId = reply.sessionId;
     console.log(`\nguru> ${reply.text}\n`);
     console.log(
-      `  [${reply.decision}${reply.answered ? `, answered ${reply.answered}` : ""}${reply.chargedRupees ? `, charged ₹${reply.chargedRupees}` : ""} | free ${reply.balance.freeRemaining}, wallet ₹${reply.balance.creditRupees} | ${((Date.now() - started) / 1000).toFixed(1)}s${verbose ? ` | tokens in ${reply.usage.inputTokens} out ${reply.usage.outputTokens}` : ""}]\n`,
+      `  [${reply.decision}${reply.answered ? `, answered ${reply.answered}` : ""}${reply.chargedRupees ? `, charged ₹${reply.chargedRupees}` : ""} | free ${reply.balance.freeRemaining}, wallet ₹${reply.balance.creditRupees} | ${((Date.now() - started) / 1000).toFixed(1)}s${reply.model ? ` | ${reply.model}` : ""}${verbose ? ` | tokens in ${reply.usage.inputTokens} out ${reply.usage.outputTokens}` : ""}]\n`,
     );
   }
   rl?.close();
