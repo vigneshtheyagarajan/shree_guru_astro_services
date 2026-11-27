@@ -101,6 +101,30 @@ export function siderealGrahaLongitudes(
 }
 
 /**
+ * Sidereal longitudes of only the slow grahas (Jupiter, Saturn, Rahu, Ketu).
+ * Same conversion as siderealGrahaLongitudes, but cheap enough to step day
+ * by day for years (used to find sign ingresses).
+ */
+export function siderealSlowLongitudes(
+  date: Date,
+  nodeType: NodeType = "mean",
+): Record<"Jupiter" | "Saturn" | "Rahu" | "Ketu", number> {
+  const time = Astronomy.MakeTime(date);
+  const jd = julianDay(date);
+  const ayanamsa = lahiriAyanamsa(jd);
+  const nutation = nutationInLongitude(time);
+  const toSidereal = (trueLongitude: number) => norm360(trueLongitude - nutation - ayanamsa);
+  const rahu =
+    nodeType === "mean" ? norm360(meanNodeMeanEquinox(julianCenturies(jd)) - ayanamsa) : toSidereal(trueNodeTrueEquinox(time));
+  return {
+    Jupiter: toSidereal(trueEclipticLongitude(PLANET_BODIES.Jupiter, time)),
+    Saturn: toSidereal(trueEclipticLongitude(PLANET_BODIES.Saturn, time)),
+    Rahu: rahu,
+    Ketu: norm360(rahu + 180),
+  };
+}
+
+/**
  * Whether each graha is retrograde, from the sign of its apparent motion
  * over +/- 12 hours. The Sun and Moon never are; the mean nodes always are.
  */

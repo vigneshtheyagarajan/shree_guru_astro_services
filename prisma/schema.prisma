@@ -488,3 +488,20 @@ model WalletTopUp {
   createdAt       DateTime      @default(now())
   paidAt          DateTime?
 }
+
+// Guru (AI astrologer) conversations. Self-contained: no relations to existing
+// models, so the marketplace tables are untouched.
+model GuruSession {
+  id                String   @id
+  userId            String?
+  service           String?
+  /// Transcript, tool state and held questions (see src/lib/guru/persist.ts).
+  state             Json
+  questionsAnswered Int      @default(0)
+  inputTokens       Int      @default(0)
+  outputTokens      Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId, updatedAt])
+}
